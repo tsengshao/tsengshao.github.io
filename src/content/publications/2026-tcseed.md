@@ -1,0 +1,15 @@
+---
+title: "The Dependence of Moist Vortex Intensification on Moisture Distribution for TC Seed Genesis"
+year: 2026
+authors: "Shao-Yu Tseng, Wei-Ting Chen, Chien-Ming Wu"
+venue: "JGR: Atmospheres (in review)"
+status: "in_review"
+links:
+  doi: ""
+  pdf: ""
+  arxiv: ""
+selected: true
+tags: ["TC seed", "moist vortex", "idealized modeling"]
+---
+
+Short highlight (optional): We show how moisture variability enhances convective aggregation and accelerates vortex intensification.

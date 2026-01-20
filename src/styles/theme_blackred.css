@@ -1,0 +1,97 @@
+:root {
+  /* Poster-like dark background (avoid pure black) */
+  --bg: #0b0f14;
+  --panel: #111a24;
+  --panel2: #0f1720;
+  --border: rgba(255, 255, 255, 0.08);
+
+  /* Text */
+  --text: #e6edf3;
+  --muted: rgba(230, 237, 243, 0.72);
+
+  /* Accent: choose ONE main accent (maroon fits your poster) */
+  --accent: #a11b2e;     /* deep red */
+  --accent2: #0b5468;    /* deep teal (for secondary) */
+
+  /* Shadows */
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  /* Radius */
+  --r-xl: 22px;
+  --r-lg: 16px;
+  --r-md: 12px;
+
+  /* Layout width */
+  --w: 1180px;
+
+  /* Typography */
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono";
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(1200px 800px at 70% -10%, rgba(161,27,46,0.22), transparent 55%),
+              radial-gradient(900px 700px at 0% 20%, rgba(11,84,104,0.18), transparent 55%),
+              var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { opacity: 0.92; }
+
+.container {
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 0 18px;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(17,26,36,0.92), rgba(17,26,36,0.78));
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(161, 27, 46, 0.18);
+  border: 1px solid rgba(161, 27, 46, 0.35);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-weight: 650;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+.btn.primary {
+  background: rgba(161, 27, 46, 0.95);
+  border: 1px solid rgba(161, 27, 46, 0.6);
+}
+.btn.primary:hover { background: rgba(161, 27, 46, 1); }
+
+.hr {
+  height: 1px;
+  background: var(--border);
+  width: 100%;
+}

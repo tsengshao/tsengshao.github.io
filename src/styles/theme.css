@@ -1,0 +1,223 @@
+:root{
+  /* ===== Clean white theme ===== */
+  --bg: #ffffff;
+  --alt: #f4f7fb;                 /* alternating section background */
+  --text: #0b1220;                /* near-black */
+  --muted: rgba(11,18,32,.68);
+  --accent: #0b2a6f;              /* deep navy */
+
+  /* ===== Layout ===== */
+  --w: 1100px;
+  --padX: 20px;
+  --sectionY: clamp(44px, 6vw, 92px);
+  --gap: 22px;
+  --prose: 70ch;
+  --r: 14px;
+
+  /* ===== Typography (keep system feel) ===== */
+  --h1: clamp(36px, 4.2vw, 56px);
+  --h2: clamp(22px, 2.4vw, 30px);
+  --p:  clamp(15px, 1.2vw, 17px);
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono";
+}
+
+/* ===== Base ===== */
+*{ box-sizing:border-box; }
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: var(--font);
+  -webkit-text-size-adjust: 100%;
+}
+
+a{ color: var(--accent); text-decoration: none; }
+a:hover{ text-decoration: underline; }
+
+.container{
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 0 var(--padX);
+}
+
+.prose{ max-width: var(--prose); }
+
+/* ===== Sections ===== */
+.section{
+  padding: var(--sectionY) 0;
+  background: var(--bg);
+}
+.section--alt{
+  background: var(--alt);
+}
+
+/* ===== Typography ===== */
+h1{
+  font-size: var(--h1);
+  line-height: 1.05;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.9px;
+}
+h2{
+  font-size: var(--h2);
+  line-height: 1.2;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.35px;
+}
+p{
+  font-size: var(--p);
+  line-height: 1.75;
+  margin: 0;
+}
+.lead{
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+code{
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: rgba(2,6,23,0.05);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* ===== Header (sticky, safe padding) ===== */
+.navbar{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.navbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+.brand{
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.navlinks{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.navlinks a{
+  color: var(--text);
+  font-weight: 650;
+  font-size: 14px;
+}
+.navlinks a:hover{
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* ===== Minimal button (optional) ===== */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color:#fff;
+  font-weight: 750;
+  border: none;
+}
+.btn:hover{
+  text-decoration:none;
+  filter: brightness(.95);
+}
+
+/* ===== Research row: text + media side-by-side ===== */
+.research-row{
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr; /* text slightly wider */
+  gap: var(--gap);
+  align-items: start;
+}
+
+.research-row--reverse{
+  grid-template-columns: 0.95fr 1.05fr;
+}
+
+.research-text{
+  max-width: var(--prose);
+}
+
+.kicker{
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.keyline{
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: var(--p);
+}
+
+/* ===== Media: fixed size across blocks ===== */
+.media-frame{
+  border-radius: var(--r);
+  overflow: hidden;
+  background: transparent; /* ✅ 讓留白跟外層背景同色 */
+}
+
+/* Fixed aspect ratio -> consistent height */
+.media-frame > img,
+.media-frame > video{
+  width: 100%;
+  aspect-ratio: var(--ratio, 16/9);
+  display: block;
+}
+
+.media-fit-cover > img,
+.media-fit-cover > video{
+  object-fit: cover;
+}
+
+.media-fit-contain > img,
+.media-fit-contain > video{
+  object-fit: contain;
+  background: transparent;
+}
+
+
+
+/* ===== Mobile behavior ===== */
+@media (max-width: 900px){
+  /* stack */
+  .research-row,
+  .research-row--reverse{
+    grid-template-columns: 1fr;
+  }
+  /* IMPORTANT: always text first then media */
+  .research-row .research-text{ order: 1 !important; }
+  .research-row .media-frame{ order: 2 !important; }
+}
+
+/* extra small: ensure header/footer never touch edges */
+@media (max-width: 520px){
+  :root{ --padX: 18px; }
+  .navlinks a{ font-size: 13px; }
+}

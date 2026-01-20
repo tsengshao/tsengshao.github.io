@@ -1,0 +1,10 @@
+---
+const { title, subtitle } = Astro.props;
+---
+
+<div style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin: 22px 0 14px;">
+  <div>
+    <div class="pill">{title}</div>
+    {subtitle && <div style="margin-top:10px; color: var(--muted); max-width: 70ch;">{subtitle}</div>}
+  </div>
+</div>

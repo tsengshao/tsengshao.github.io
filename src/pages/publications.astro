@@ -1,0 +1,53 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { getCollection } from "astro:content";
+
+const pubs = await getCollection("publications");
+
+// group by year desc
+const byYear = pubs
+  .sort((a, b) => b.data.year - a.data.year)
+  .reduce((acc, p) => {
+    const y = p.data.year;
+    acc[y] = acc[y] || [];
+    acc[y].push(p);
+    return acc;
+  }, /** @type {Record<number, typeof pubs>} */ ({}));
+---
+
+<BaseLayout title="Publications">
+  <div class="container" style="padding: 36px 0 22px;">
+    <SectionHeader
+      title="Publications"
+      subtitle="Full list with Google Scholar / ORCID links (add later). Grouped by year for fast scanning."
+    />
+
+    <div class="card" style="padding: 18px 18px;">
+      {Object.entries(byYear).map(([year, list]) => (
+        <div style="margin: 18px 0;">
+          <div style="font-size: 18px; font-weight: 800; margin-bottom: 10px;">
+            {year}
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap: 10px;">
+            {list.map((p) => (
+              <div style="padding: 12px 12px; border: 1px solid var(--border); border-radius: var(--r-lg); background: rgba(0,0,0,0.12);">
+                <div style="font-weight: 800;">{p.data.title}</div>
+                <div style="color: var(--muted); margin-top: 6px; line-height: 1.45;">
+                  {p.data.authors}{p.data.venue ? ` • ${p.data.venue}` : ""}
+                </div>
+
+                <div style="margin-top: 8px; display:flex; gap: 10px; flex-wrap: wrap;">
+                  {p.data.links.pdf && <a class="btn" href={p.data.links.pdf} target="_blank">PDF</a>}
+                  {p.data.links.doi && <a class="btn" href={p.data.links.doi} target="_blank">DOI</a>}
+                  {p.data.links.arxiv && <a class="btn" href={p.data.links.arxiv} target="_blank">arXiv</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,36 @@
+---
+const {
+  index,
+  title,
+  short,
+  cover,
+  video,
+  fit = "cover",     // default
+  ratio = "16/9"     // default
+} = Astro.props;
+
+const reverse = (index % 2 === 1); // 0-based odd => reverse
+---
+
+<div class={`research-row ${reverse ? "research-row--reverse" : ""}`}>
+  <div class="research-text" style={reverse ? "order:2" : "order:1"}>
+    <div class="kicker">Research topic {index + 1}</div>
+    <h2 style="margin:0;">{title}</h2>
+    <p class="keyline">{short}</p>
+  </div>
+
+  <div
+    class={`media-frame media-fit-${fit}`}
+    style={`${reverse ? "order:1" : "order:2"}; --ratio:${ratio};`}
+  >
+    {video ? (
+      <video src={video} autoplay muted loop playsinline></video>
+    ) : cover ? (
+      <img src={cover} alt={title} loading="lazy" />
+    ) : (
+      <div style="padding: 16px; color: var(--muted);">
+        Add <code>cover</code> or <code>video</code> in the project frontmatter.
+      </div>
+    )}
+  </div>
+</div>

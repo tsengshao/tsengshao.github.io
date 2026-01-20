@@ -1,0 +1,33 @@
+---
+const { title, short, cover, video, tags, href } = Astro.props;
+---
+
+<div class="card" style="padding: 16px; display:flex; flex-direction:column; gap:12px;">
+  <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+    <div>
+      <div style="font-size: 18px; font-weight: 900; line-height: 1.2;">{title}</div>
+      <div style="margin-top: 8px; color: var(--muted); line-height: 1.55;">{short}</div>
+    </div>
+    {href && <a class="btn" href={href}>Read more</a>}
+  </div>
+
+  {(video || cover) && (
+    <div style="border-radius: var(--r-lg); overflow:hidden; border: 1px solid var(--border); background: rgba(0,0,0,0.18);">
+      {video ? (
+        <video src={video} autoplay muted loop playsinline style="width:100%; display:block;"></video>
+      ) : (
+        <img src={cover} alt={title} style="width:100%; display:block;" loading="lazy" />
+      )}
+    </div>
+  )}
+
+  {tags?.length ? (
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      {tags.map((t) => (
+        <span style="font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background: rgba(255,255,255,0.04);">
+          {t}
+        </span>
+      ))}
+    </div>
+  ) : null}
+</div>
