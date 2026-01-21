@@ -10,9 +10,8 @@ const projects = defineCollection({
     tags: z.array(z.string()).default([]),
     cover: z.string().optional(),   // e.g., "/figures/idealized_cover.webp"
     video: z.string().optional(),   // e.g., "/videos/idealized_loop.webm"
-    fit: z.string().default('contain'),
     ratio: z.string().default('16/9'),
-
+    fit:   z.string().default('contain'),
   }),
 });
 
