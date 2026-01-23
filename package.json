@@ -3,7 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "predev": "node scripts/gen-site-meta.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/gen-site-meta.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

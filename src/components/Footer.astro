@@ -1,3 +1,7 @@
+---
+import meta from "../generated/site-meta.json";
+---
+
 <footer role="contentinfo" style="background: var(--alt); padding: 22px 0;">
   <div class="container" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
     <div style="color: var(--muted); font-size: 13px;">
@@ -5,7 +9,8 @@
     </div>
 
     <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; color: var(--muted); font-size: 13px;">
-      <span>Last updated: {new Date().toISOString().slice(0,10)}</span>
+      <span>Last updated: {meta.lastUpdated}</span>
+      {/* {meta.commit && <span style="opacity:.7">({meta.commit})</span>} show git commend*/}
     </div>
   </div>
 </footer>
