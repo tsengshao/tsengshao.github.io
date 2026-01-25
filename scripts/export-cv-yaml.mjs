@@ -1,187 +1,210 @@
-// scripts/export-cv-yaml.mjs
 import fs from "node:fs";
 import path from "node:path";
 import fg from "fast-glob";
 import matter from "gray-matter";
 import yaml from "js-yaml";
 
-const ROOT = process.cwd();
-const CONTENT_DIR = path.join(ROOT, "src", "content");
-const OUT_PATH = path.join(ROOT, "src", "generated", "cv.generated.yml");
+const REPO_ROOT = process.cwd();
 
-// 需要粗體的人名（請用和 publications frontmatter authors 完全一致的字串）
-const HIGHLIGHT_AUTHORS = new Set([
-  "Tseng, S.-Y.",
-  // "Chen, W.-T.",
-  // "Wu, C.-M.",
-]);
+const CONTENT_ROOT = path.join(REPO_ROOT, "src", "content");
+const OUT_DIR = path.join(REPO_ROOT, "src", "generated");
+const OUT_FILE = path.join(OUT_DIR, "cv.generated.yml");
 
-function readFrontmatter(file) {
-  const raw = fs.readFileSync(file, "utf8");
-  const { data } = matter(raw);
-  return data ?? {};
+function readMdFrontmatter(dirName) {
+  const baseDir = path.join(CONTENT_ROOT, dirName);
+  const files = fg.sync(["**/*.md", "**/*.mdx"], { cwd: baseDir, dot: false });
+
+  return files.map((rel) => {
+    const full = path.join(baseDir, rel);
+    const raw = fs.readFileSync(full, "utf-8");
+    const { data } = matter(raw);
+
+    return {
+      __id: path.basename(rel, path.extname(rel)),
+      __src: full,
+      data,
+    };
+  });
 }
 
-function ensureArray(v) {
-  if (Array.isArray(v)) return v;
-  if (typeof v === "string" && v.trim()) return [v.trim()];
-  return [];
+function asString(x) {
+  if (x === null || x === undefined) return undefined;
+  const s = String(x).trim();
+  return s === "" ? undefined : s;
 }
 
-function normalizeAuthors(authors) {
-  const arr = ensureArray(authors);
-  return arr.map((name) => ({
-    name,
-    highlight: HIGHLIGHT_AUTHORS.has(name),
+function asInt(x) {
+  if (x === null || x === undefined || x === "") return undefined;
+  const n = Number(x);
+  return Number.isFinite(n) ? Math.trunc(n) : undefined;
+}
+
+function asBool(x, dflt = false) {
+  if (x === null || x === undefined) return dflt;
+  return Boolean(x);
+}
+
+function asArray(x) {
+  if (!Array.isArray(x)) return [];
+  return x;
+}
+
+function normalizeAuthors(authors, src) {
+  if (!Array.isArray(authors)) {
+    throw new Error(`authors must be an array: ${src}`);
+  }
+  return authors.map((a) => ({
+    name: asString(a?.name) || "",
+    roles: Array.isArray(a?.roles) ? a.roles.map(String) : [],
+    emphasis: Array.isArray(a?.emphasis) ? a.emphasis.map(String) : undefined,
   }));
 }
 
-function safeStr(v) {
-  return typeof v === "string" ? v : (v == null ? "" : String(v));
-}
+function normalizePublications(items) {
+  const pubs = items.map(({ __id, __src, data }) => {
+    if (!data?.title || data?.year === undefined || data?.year === null) {
+      throw new Error(`Missing title/year in publication: ${__src}`);
+    }
+    return {
+      id: __id,
+      title: String(data.title).trim(),
+      year: asInt(data.year),
 
-function sortDescByKey(key) {
-  return (a, b) => safeStr(b[key]).localeCompare(safeStr(a[key]));
-}
+      authors: normalizeAuthors(data.authors, __src),
 
-function sortNumDescByKey(key) {
-  return (a, b) => (b[key] ?? 0) - (a[key] ?? 0);
-}
+      type: asString(data.type) || "journal",
+      status: asString(data.status) || "published",
 
-async function loadCollection(subdir) {
-  const dir = path.join(CONTENT_DIR, subdir);
-  if (!fs.existsSync(dir)) return [];
+      venue: asString(data.venue),
+      volume: asString(data.volume),
+      issue: asString(data.issue),
+      pages: asString(data.pages),
 
-  const pattern = path.join(dir, "*.md").replaceAll("\\", "/");
-  const files = await fg(pattern);
+      links: {
+        doi: asString(data?.links?.doi),
+        journal: asString(data?.links?.journal),
+        pdf: asString(data?.links?.pdf),
+        other: asString(data?.links?.other),
+      },
 
-  return files.map((file) => ({
-    source: path.relative(ROOT, file),
-    data: readFrontmatter(file),
-  }));
-}
-
-/**
- * Validate publication frontmatter roughly based on your schema:
- * title: string
- * year: int
- * authors: string[]
- * venue?: string
- * volume/issue/pages?: string
- * status: published|in_review|submitted|preprint
- * selected: boolean
- * links: {doi?,pdf?,other?}
- */
-function normalizePublication(x) {
-  const d = x.data ?? {};
-  const links = d.links && typeof d.links === "object" ? d.links : {};
-
-  return {
-    year: Number.isFinite(d.year) ? d.year : null,
-    title: safeStr(d.title),
-    authors: normalizeAuthors(d.authors),
-
-    venue: d.venue ?? "",
-    volume: d.volume ?? "",
-    issue: d.issue ?? "",
-    pages: d.pages ?? "",
-
-    status: d.status ?? "published",
-    selected: Boolean(d.selected),
-
-    links: {
-      doi: links.doi ?? "",
-      pdf: links.pdf ?? "",
-      other: links.other ?? "",
-    },
-
-    source: x.source,
-  };
-}
-
-// 下面三個 normalize 會「盡量相容」：即使你 schema 還沒完全定義也能先跑
-function normalizePosition(x) {
-  const d = x.data ?? {};
-  return {
-    start: d.start ?? "",
-    end: d.end ?? "",
-    role: d.role ?? "",
-    org: d.org ?? "",
-    location: d.location ?? "",
-    source: x.source,
-  };
-}
-
-function normalizeHonor(x) {
-  const d = x.data ?? {};
-  return {
-    year: Number.isFinite(d.year) ? d.year : null,
-    title: d.title ?? "",
-    org: d.org ?? "",
-    source: x.source,
-  };
-}
-
-function normalizeTalk(x) {
-  const d = x.data ?? {};
-  return {
-    date: d.date ?? "",
-    title: d.title ?? "",
-    event: d.event ?? "",
-    type: d.type ?? "",
-    location: d.location ?? "",
-    coauthors: ensureArray(d.coauthors),
-    source: x.source,
-  };
-}
-
-async function main() {
-  const [pubsRaw, positionsRaw, honorsRaw, talksRaw] = await Promise.all([
-    loadCollection("publications"),
-    loadCollection("positions"),
-    loadCollection("honors"),
-    loadCollection("talks"),
-  ]);
-
-  const publications = pubsRaw
-    .map(normalizePublication)
-    .filter((p) => p.title && p.year) // 最基本的過濾
-    .sort(sortNumDescByKey("year"));
-
-  const positions = positionsRaw.map(normalizePosition).sort(sortDescByKey("start"));
-  const honors_and_awards = honorsRaw
-    .map(normalizeHonor)
-    .sort(sortNumDescByKey("year"));
-  const conferences_and_presentations = talksRaw
-    .map(normalizeTalk)
-    .sort(sortDescByKey("date"));
-
-  const out = {
-    generated_at: new Date().toISOString(),
-    highlight_authors: Array.from(HIGHLIGHT_AUTHORS),
-
-    // CV sections
-    positions,
-    publications,
-    honors_and_awards,
-    conferences_and_presentations,
-  };
-
-  const outYaml = yaml.dump(out, {
-    lineWidth: 120,
-    noRefs: true,
+      selected: asBool(data.selected, false),
+      tags: asArray(data.tags).map(String),
+      url: asString(data.url),
+    };
   });
 
-  fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, outYaml, "utf8");
-
-  console.log(`[export:cv] wrote ${path.relative(ROOT, OUT_PATH)}`);
-  console.log(
-    `[export:cv] publications=${publications.length}, positions=${positions.length}, honors=${honors_and_awards.length}, talks=${conferences_and_presentations.length}`
-  );
+  // Sort: year desc, then title asc
+  pubs.sort((a, b) => (b.year - a.year) || a.title.localeCompare(b.title));
+  return pubs;
 }
 
-main().catch((err) => {
-  console.error("[export:cv] failed:", err);
-  process.exit(1);
-});
+function normalizePositions(items) {
+  const pos = items.map(({ __id, __src, data }) => {
+    if (!data?.start || !data?.end || !data?.role || !data?.org) {
+      throw new Error(`Missing required fields in position: ${__src}`);
+    }
+    return {
+      id: __id,
+      start: String(data.start).trim(),
+      end: String(data.end).trim(),
+      role: String(data.role).trim(),
+      org: String(data.org).trim(),
+      location: asString(data.location),
+    };
+  });
+
+  // Sort by start desc (string compare works for YYYY-MM)
+  pos.sort((a, b) => b.start.localeCompare(a.start));
+  return pos;
+}
+
+function normalizeHonors(items) {
+  const honors = items.map(({ __id, __src, data }) => {
+    if (data?.year === undefined || data?.year === null || !data?.title) {
+      throw new Error(`Missing year/title in honor: ${__src}`);
+    }
+    return {
+      id: __id,
+      year: asInt(data.year),
+      title: String(data.title).trim(),
+      org: asString(data.org),
+    };
+  });
+
+  honors.sort((a, b) => (b.year - a.year) || a.title.localeCompare(b.title));
+  return honors;
+}
+
+function normalizeTalks(items) {
+  const talks = items.map(({ __id, __src, data }) => {
+    // required per your schema: date, year, title, event, kind, role
+    if (!data?.date || data?.year === undefined || data?.year === null || !data?.title || !data?.event || !data?.kind || !data?.role) {
+      throw new Error(`Missing required fields in talk: ${__src}`);
+    }
+
+    return {
+      id: __id,
+      date: String(data.date).trim(),
+      year: asInt(data.year),
+
+      title: String(data.title).trim(),
+      event: String(data.event).trim(),
+
+      kind: String(data.kind).trim(), // oral/poster/invited/seminar/panel
+      role: String(data.role).trim(), // presenter/coauthor/organizer/chair
+
+      location: asString(data.location),
+
+      session: data.session
+        ? {
+            id: asString(data.session.id),
+            name: asString(data.session.name),
+          }
+        : undefined,
+
+      authors: normalizeAuthors(data.authors || [], __src),
+
+      links: {
+        abstract: asString(data?.links?.abstract),
+        slides: asString(data?.links?.slides),
+        poster: asString(data?.links?.poster),
+        video: asString(data?.links?.video),
+        other: asString(data?.links?.other),
+      },
+
+      selected: asBool(data.selected, false),
+      tags: asArray(data.tags).map(String),
+      url: asString(data.url),
+    };
+  });
+
+  // Sort: date desc (YYYY-MM[-DD] works), then title asc
+  talks.sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
+  return talks;
+}
+
+function main() {
+  const publicationsRaw = readMdFrontmatter("publications");
+  const positionsRaw = readMdFrontmatter("positions");
+  const honorsRaw = readMdFrontmatter("honors");
+  const talksRaw = readMdFrontmatter("talks");
+
+  const cv = {
+    generated_at: new Date().toISOString(),
+    positions: normalizePositions(positionsRaw),
+    honors_and_awards: normalizeHonors(honorsRaw),
+    talks: normalizeTalks(talksRaw),
+    publications: normalizePublications(publicationsRaw),
+  };
+
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.writeFileSync(OUT_FILE, yaml.dump(cv, { lineWidth: 120, noRefs: true }), "utf-8");
+
+  console.log("[export-cv-yaml] wrote:", OUT_FILE);
+  console.log("[export-cv-yaml] positions:", cv.positions.length);
+  console.log("[export-cv-yaml] honors:", cv.honors_and_awards.length);
+  console.log("[export-cv-yaml] talks:", cv.talks.length);
+  console.log("[export-cv-yaml] publications:", cv.publications.length);
+}
+
+main();

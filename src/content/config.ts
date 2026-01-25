@@ -1,5 +1,7 @@
 import { defineCollection, z } from "astro:content";
 
+const urlOrEmpty = z.union([z.string().url(), z.literal("")]);
+
 const projects = defineCollection({
   type: "content",
   schema: z.object({
@@ -21,25 +23,49 @@ const publications = defineCollection({
     title: z.string(),
     year: z.number().int(),
 
-    // 必要：APA + 粗體作者
-    authors: z.array(z.string()),
+    authors: z.array(
+      z.object({
+        name: z.string(),
 
-    // 基本出版資訊（網站顯示 + APA 需要）
-    venue: z.string().optional(),  // journal / conference name
+        // semantic roles
+        roles: z
+          .array(z.enum(["me", "mentor", "student", "corresponding"]))
+          .default([]),
+
+        // optional display override
+        emphasis: z
+          .array(z.enum(["bold", "underline", "italic"]))
+          .optional(),
+      })
+    ),
+
+    type: z
+      .enum(["journal", "conference", "preprint", "thesis", "dataset", "other"])
+      .default("journal"),
+
+    status: z
+      .enum(["published", "in_review", "submitted", "preprint"])
+      .default("published"),
+
+    venue: z.string().optional(),
     volume: z.string().optional(),
     issue: z.string().optional(),
     pages: z.string().optional(),
 
-    // 你原本就有、而且很實用（網站排序/標記用）
-    status: z.enum(["published", "in_review", "submitted", "preprint"]).default("published"),
-    selected: z.boolean().default(false),
+    links: z
+      .object({
+        doi: z.string().optional(),
+        journal: urlOrEmpty.optional(),
+        pdf: z.string().optional(),
+        other: z.string().optional(),
+      })
+      .default({}),
 
-    // 你原本的 links：之後 APA DOI / PDF / other 都會用到
-    links: z.object({
-      doi: z.string().optional(),
-      pdf: z.string().optional(),
-      other: z.string().optional(),
-    }).default({}),
+    selected: z.boolean().default(false),
+    tags: z.array(z.string()).default([]),
+
+    // optional canonical url for website
+    url: z.string().url().optional(),
   }),
 });
 
@@ -66,14 +92,62 @@ const honors = defineCollection({
 const talks = defineCollection({
   type: "content",
   schema: z.object({
-    date: z.string(), // e.g. "2026-05"
+    // When (string to allow YYYY-MM or YYYY-MM-DD)
+    date: z.string(),
+    year: z.number().int(),
+
+    // What
     title: z.string(),
     event: z.string(),
-    type: z.enum(["oral", "poster", "invited"]).default("oral"),
+
+    // How / your role
+    kind: z.enum(["oral", "poster", "invited", "seminar", "panel"]),
+    role: z.enum(["presenter", "coauthor", "organizer", "chair"]),
+
+    // Where
     location: z.string().optional(),
-    coauthors: z.array(z.string()).optional()
-  })
+
+    // Session info (optional)
+    session: z
+      .object({
+        id: z.string().optional(),
+        name: z.string().optional(),
+      })
+      .optional(),
+
+    // Authors (same structure as publications)
+    authors: z
+      .array(
+        z.object({
+          name: z.string(),
+          roles: z
+            .array(z.enum(["me", "mentor", "student", "corresponding"]))
+            .default([]),
+          emphasis: z.array(z.enum(["bold", "underline", "italic"])).optional(),
+        })
+      )
+      .default([]),
+
+    // Links for website + CV
+    links: z
+      .object({
+        abstract: urlOrEmpty.optional(),
+        slides: z.string().optional(), // can be relative path like /talks/...
+        poster: z.string().optional(),
+        video: urlOrEmpty.optional(),
+        other: urlOrEmpty.optional(),
+      })
+      .default({}),
+
+    selected: z.boolean().default(false),
+    tags: z.array(z.string()).default([]),
+
+    // Optional canonical url for a dedicated page
+    url: z.string().url().optional(),
+  }),
 });
+
+
 
 export const collections = {
   projects,

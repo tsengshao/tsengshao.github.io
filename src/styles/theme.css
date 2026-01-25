@@ -221,3 +221,65 @@ code{
   :root{ --padX: 18px; }
   .navlinks a{ font-size: 13px; }
 }
+
+/* ===== Publications ===== */
+.pub-block{ margin-top: 22px; }
+.pub-block-title{
+  font-size: 18px;
+  font-weight: 850;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.2px;
+}
+
+.pub-year-group{ margin-top: 18px; }
+.pub-year-heading{
+  font-size: 16px;
+  font-weight: 850;
+  margin: 14px 0 8px 0;
+  color: var(--text);
+}
+
+.pub-list{
+  margin: 0;
+  padding-left: 1.2em; /* ordered list indent */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pub-item{
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(15,23,42,.10);
+}
+
+.pub-item--selected{
+  /* subtle highlight: not loud, but noticeable */
+  border-bottom-color: rgba(11,42,111,.18);
+}
+
+.pub-cite{
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.pub-title{ font-weight: 650; }
+.pub-authors{ color: var(--text); }
+.pub-year, .pub-venue, .pub-doi{ color: var(--muted); }
+
+.author--me{ font-weight: 850; }
+.author--student{ text-decoration: underline; text-underline-offset: 2px; }
+
+.pub-actions{
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pub-link{
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+.pub-link:hover{ text-decoration: underline; }

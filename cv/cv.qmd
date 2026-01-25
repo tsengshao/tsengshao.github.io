@@ -16,12 +16,14 @@ jupyter: python3
 
 ```{python}
 #| output: asis
+import os
 import pathlib
 import yaml
 
-# Assume you run "quarto render ..." from the repo root
-project_cv = pathlib.Path(".").resolve()
-project_root = project_cv.parent  # cv/ -> repo root
+# Run from repo root:
+#   node scripts/export-cv-yaml.mjs
+#   quarto render cv/cv.qmd --to pdf
+project_root = pathlib.Path(".").resolve().parent
 yaml_path = (project_root / "src" / "generated" / "cv.generated.yml").resolve()
 
 if not yaml_path.exists():
@@ -29,39 +31,104 @@ if not yaml_path.exists():
 
 cv = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
 
+fmt = os.environ.get("QUARTO_FORMAT", "").lower()
+is_pdf = ("pdf" in fmt)
+
+ROLE_DEFAULT = {
+    "me": ["bold"],
+    "student": ["underline"],
+    "mentor": [],
+    "corresponding": ["italic"],
+}
+
 def s(x):
     if x is None:
         return ""
     return str(x).strip()
 
-def md_bold(text):
-    return "**" + text + "**"
+def latex_escape(text):
+    # minimal escape for names/titles in LaTeX
+    t = s(text)
+    t = t.replace("\\", "\\textbackslash{}")
+    t = t.replace("{", "\\{").replace("}", "\\}")
+    t = t.replace("&", "\\&")
+    t = t.replace("%", "\\%")
+    t = t.replace("$", "\\$")
+    t = t.replace("#", "\\#")
+    t = t.replace("_", "\\_")
+    t = t.replace("^", "\\^{}")
+    t = t.replace("~", "\\~{}")
+    return t
 
-def authors_line(authors):
-    # authors: [{name: "...", highlight: bool}, ...]
+def unique_keep_order(xs):
+    seen = set()
+    out = []
+    for x in xs:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+def author_emphasis(a):
+    # per your schema: emphasis is optional override
+    emp = a.get("emphasis", None)
+    if isinstance(emp, list) and len(emp) > 0:
+        return [str(x) for x in emp]
+
+    roles = a.get("roles") or []
+    derived = []
+    for r in roles:
+        derived += ROLE_DEFAULT.get(str(r), [])
+    return unique_keep_order(derived)
+
+def apply_emphasis(name, emphasis):
+    # PDF: use LaTeX commands (more reliable than Markdown underline)
+    # HTML: use <strong>/<u>/<em>
+    if is_pdf:
+        t = latex_escape(name)
+        # underline inside, italic next, bold outside
+        if "underline" in emphasis:
+            t = "\\underline{" + t + "}"
+        if "italic" in emphasis:
+            t = "\\emph{" + t + "}"
+        if "bold" in emphasis:
+            t = "\\textbf{" + t + "}"
+        return t
+    else:
+        t = s(name)
+        if "underline" in emphasis:
+            t = "<u>" + t + "</u>"
+        if "italic" in emphasis:
+            t = "<em>" + t + "</em>"
+        if "bold" in emphasis:
+            t = "<strong>" + t + "</strong>"
+        return t
+
+def authors_apa(authors):
+    # authors: [{name, roles, emphasis?}, ...]
     if not authors:
         return ""
     names = []
     for a in authors:
-        name = s(a.get("name"))
-        if a.get("highlight"):
-            name = md_bold(name)
-        names.append(name)
+        nm = s(a.get("name"))
+        emp = author_emphasis(a)
+        names.append(apply_emphasis(nm, emp))
+
     if len(names) == 1:
         return names[0]
     if len(names) == 2:
         return names[0] + " & " + names[1]
     return ", ".join(names[:-1]) + ", & " + names[-1]
 
-def doi_to_url(doi):
-    doi = s(doi)
-    if not doi:
+def doi_url(doi):
+    d = s(doi)
+    if not d:
         return ""
-    if doi.startswith("http://") or doi.startswith("https://"):
-        return doi
-    return "https://doi.org/" + doi
+    if d.startswith("http://") or d.startswith("https://"):
+        return d
+    return "https://doi.org/" + d
 
-def pub_tail(pub):
+def pub_venue_line(pub):
     venue = s(pub.get("venue"))
     vol = s(pub.get("volume"))
     issue = s(pub.get("issue"))
@@ -69,7 +136,7 @@ def pub_tail(pub):
 
     parts = []
     if venue:
-        parts.append("*" + venue + "*")
+        parts.append("\\emph{" + latex_escape(venue) + "}" if is_pdf else "*" + venue + "*")
 
     vi = ""
     if vol and issue:
@@ -80,25 +147,73 @@ def pub_tail(pub):
         vi = "(" + issue + ")"
 
     if vi:
-        parts.append(vi)
+        parts.append(latex_escape(vi) if is_pdf else vi)
     if pages:
-        parts.append(pages)
+        parts.append(latex_escape(pages) if is_pdf else pages)
 
     if not parts:
         return ""
     return ", ".join(parts) + "."
 
-def pub_links(pub):
+def pub_links_line(pub):
     links = pub.get("links") or {}
     doi = s(links.get("doi"))
+    journal = s(links.get("journal"))
     pdf = s(links.get("pdf"))
     other = s(links.get("other"))
 
     out = []
     if doi:
-        out.append("[DOI](" + doi_to_url(doi) + ")")
+        out.append("[DOI](" + doi_url(doi) + ")")
+    if journal:
+        out.append("[Journal](" + journal + ")")
     if pdf:
         out.append("[PDF](" + pdf + ")")
+    if other:
+        out.append("[Link](" + other + ")")
+
+    if not out:
+        return ""
+    return " " + " ".join(out)
+
+def talk_context_line(t):
+    # (Optional) Session + location
+    session = t.get("session") or {}
+    sid = s(session.get("id"))
+    sname = s(session.get("name"))
+    location = s(t.get("location"))
+
+    bits = []
+    if sid or sname:
+        if sid and sname:
+            bits.append(sid + ": " + sname)
+        else:
+            bits.append(sid or sname)
+
+    if location:
+        bits.append(location)
+
+    if not bits:
+        return ""
+    return " " + " - ".join(bits) + "."
+
+def talk_links_line(t):
+    links = t.get("links") or {}
+    abstract = s(links.get("abstract"))
+    slides = s(links.get("slides"))
+    poster = s(links.get("poster"))
+    video = s(links.get("video"))
+    other = s(links.get("other"))
+
+    out = []
+    if abstract:
+        out.append("[Abstract](" + abstract + ")")
+    if slides:
+        out.append("[Slides](" + slides + ")")
+    if poster:
+        out.append("[Poster](" + poster + ")")
+    if video:
+        out.append("[Video](" + video + ")")
     if other:
         out.append("[Link](" + other + ")")
 
@@ -123,43 +238,54 @@ for p in cv.get("positions", []) or []:
     org = s(p.get("org"))
     location = s(p.get("location"))
 
-    date = ""
-    if start or end:
-        date = start + "–" + end + ": "
+    date = (start + "-" + end + ": ") if (start or end) else ""
+    loc = (" (" + location + ")") if location else ""
 
-    loc = ""
-    if location:
-        loc = " (" + location + ")"
-
-    print("- " + date + md_bold(role) + ", " + org + loc)
+    if is_pdf:
+        line = "- " + latex_escape(date) + "\\textbf{" + latex_escape(role) + "}, " + latex_escape(org) + latex_escape(loc)
+    else:
+        line = "- " + date + "**" + role + "**, " + org + loc
+    print(line)
 ```
-
 
 ```{python}
 #| output: asis
 heading("Publications")
 
 pubs = cv.get("publications", []) or []
-
 for pub in pubs:
-    a = authors_line(pub.get("authors", []))
+    a = authors_apa(pub.get("authors", []))
     y = s(pub.get("year"))
     title = s(pub.get("title"))
 
-    line = ""
-    if a:
-        line += a + ". "
-    if y:
-        line += "(" + y + "). "
-    line += title + ". "
+    if is_pdf:
+        line = ""
+        if a:
+            line += a + ". "
+        if y:
+            line += "(" + latex_escape(y) + "). "
+        line += latex_escape(title) + ". "
 
-    tail = pub_tail(pub)
-    if tail:
-        line += tail
+        tail = pub_venue_line(pub)
+        if tail:
+            line += tail
 
-    line += pub_links(pub)
+        line += pub_links_line(pub)
+        print("- " + line.strip())
+    else:
+        line = ""
+        if a:
+            line += a + ". "
+        if y:
+            line += "(" + y + "). "
+        line += title + ". "
 
-    print("- " + line.strip())
+        tail = pub_venue_line(pub)
+        if tail:
+            line += tail
+
+        line += pub_links_line(pub)
+        print("- " + line.strip())
 ```
 
 ```{python}
@@ -171,37 +297,83 @@ for h in cv.get("honors_and_awards", []) or []:
     title = s(h.get("title"))
     org = s(h.get("org"))
 
-    line = ""
-    if year:
-        line += year + ": "
-    line += title
-    if org:
-        line += " - " + org
-
-    print("- " + line)
+    if is_pdf:
+        line = ""
+        if year:
+            line += latex_escape(year) + ": "
+        line += latex_escape(title)
+        if org:
+            line += " - " + latex_escape(org)
+        print("- " + line)
+    else:
+        line = ""
+        if year:
+            line += year + ": "
+        line += title
+        if org:
+            line += " - " + org
+        print("- " + line)
 ```
+
 
 ```{python}
 #| output: asis
 heading("Conferences and Presentations")
 
-for t in cv.get("conferences_and_presentations", []) or []:
+talks = cv.get("talks", []) or []
+for t in talks:
+    a = authors_apa(t.get("authors", []))
+    y = s(t.get("year"))
     date = s(t.get("date"))
-    typ = s(t.get("type"))
     title = s(t.get("title"))
     event = s(t.get("event"))
-    location = s(t.get("location"))
+    kind = s(t.get("kind"))
+    role = s(t.get("role"))
 
-    prefix = ""
-    if date:
-        prefix += date + " "
-    if typ:
-        prefix += "[" + typ + "] "
+    # APA-like talk format:
+    # Authors. (Year). Title. Event. [Kind; Role]. Session/Location. Links
+    if is_pdf:
+        line = ""
+        if a:
+            line += a + ". "
+        if y:
+            line += "(" + latex_escape(y) + "). "
+        line += latex_escape(title) + ". "
+        if event:
+            line += "\\emph{" + latex_escape(event) + "}."
+        if kind or role or date:
+            tag = []
+            if date:
+                tag.append(date)
+            if kind:
+                tag.append(kind)
+            if role:
+                tag.append(role)
+            line += " [" + latex_escape("; ".join(tag)) + "]."
 
-    loc = ""
-    if location:
-        loc = " (" + location + ")"
+        line += talk_context_line(t)
+        line += talk_links_line(t)
+        print("- " + line.strip())
+    else:
+        line = ""
+        if a:
+            line += a + ". "
+        if y:
+            line += "(" + y + "). "
+        line += title + ". "
+        if event:
+            line += "*" + event + "*."
+        tag = []
+        if date:
+            tag.append(date)
+        if kind:
+            tag.append(kind)
+        if role:
+            tag.append(role)
+        if tag:
+            line += " [" + "; ".join(tag) + "]."
 
-    print("- " + prefix + title + ". " + "*" + event + "*" + loc)
+        line += talk_context_line(t)
+        line += talk_links_line(t)
+        print("- " + line.strip())
 ```
-

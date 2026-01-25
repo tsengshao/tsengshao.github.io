@@ -3,16 +3,144 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { getCollection } from "astro:content";
 
-const pubs = await getCollection("publications");
+/* ---------- helpers ---------- */
+const escapeHtml = (s = "") =>
+  s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
-const byYear = pubs
-  .sort((a, b) => b.data.year - a.data.year)
-  .reduce((acc, p) => {
-    const y = p.data.year;
-    acc[y] = acc[y] || [];
-    acc[y].push(p);
-    return acc;
-  }, /** @type {Record<number, typeof pubs>} */ ({}));
+function toInitials(given = "") {
+  // Shao-Yu -> S.-Y.
+  return given
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => {
+      const hy = part.split("-");
+      if (hy.length > 1) return hy.map((x) => (x[0] ? x[0].toUpperCase() + "." : "")).join("-");
+      return part[0] ? part[0].toUpperCase() + "." : "";
+    })
+    .join(" ");
+}
+
+function formatNameAPA(fullName = "") {
+  const s = fullName.trim();
+  if (!s) return "";
+  if (s.includes(",")) {
+    const [lastRaw, givenRaw] = s.split(",").map((x) => x.trim());
+    return `${lastRaw}, ${toInitials(givenRaw)}`.trim();
+  }
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  const given = parts.slice(0, -1).join(" ");
+  return `${last}, ${toInitials(given)}`.trim();
+}
+
+function joinAuthorsHtml(authorHtmlList = []) {
+  const n = authorHtmlList.length;
+  if (n === 0) return "";
+  if (n === 1) return authorHtmlList[0];
+  if (n === 2) return `${authorHtmlList[0]} &amp; ${authorHtmlList[1]}`;
+  return `${authorHtmlList.slice(0, -1).join(", ")}, &amp; ${authorHtmlList[n - 1]}`;
+}
+
+function renderAuthorsHtml(authors = []) {
+  const pieces = authors.map((a) => {
+    const name = escapeHtml(formatNameAPA(a.name));
+    const roles = a.roles ?? [];
+    const emph = a.emphasis ?? [];
+
+    const isMe = roles.includes("me") || emph.includes("bold");
+    const isStudent = roles.includes("student") || emph.includes("underline");
+    const isItalic = emph.includes("italic");
+
+    // order: italic inside underline inside bold (looks fine)
+    let html = name;
+    if (isItalic) html = `<em>${html}</em>`;
+    if (isStudent) html = `<span class="author author--student">${html}</span>`;
+    if (isMe) html = `<strong class="author author--me">${html}</strong>`;
+    return html;
+  });
+
+  return joinAuthorsHtml(pieces);
+}
+
+function doiToUrl(doi = "") {
+  const d = doi.trim();
+  if (!d) return "";
+  if (d.startsWith("http://") || d.startsWith("https://")) return d;
+  return `https://doi.org/${d}`;
+}
+
+function statusLabel(s) {
+  if (s === "in_review") return "In review";
+  if (s === "submitted") return "Submitted";
+  if (s === "preprint") return "Preprint";
+  return "Published";
+}
+
+/* ---------- data ---------- */
+const pubsAll = await getCollection("publications");
+
+const pendingStatuses = new Set(["in_review", "submitted", "preprint"]);
+
+const pending = pubsAll
+  .filter((p) => pendingStatuses.has(p.data.status))
+  .sort((a, b) => (b.data.year - a.data.year) || String(a.data.title).localeCompare(String(b.data.title)));
+
+const selected = pubsAll
+  .filter((p) => p.data.selected)
+  .sort((a, b) => (b.data.year - a.data.year) || String(a.data.title).localeCompare(String(b.data.title)));
+
+const published = pubsAll
+  .filter((p) => p.data.status === "published")
+  .sort((a, b) => (b.data.year - a.data.year) || String(a.data.title).localeCompare(String(b.data.title)));
+
+const byYear = published.reduce((acc, p) => {
+  const y = p.data.year;
+  acc[y] = acc[y] || [];
+  acc[y].push(p);
+  return acc;
+}, /** @type {Record<number, typeof published>} */ ({}));
+
+const yearsDesc = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+
+function venueLineHtml(p) {
+  const v = p.data.venue?.trim() || "";
+  const vol = p.data.volume?.trim() || "";
+  const iss = p.data.issue?.trim() || "";
+  const pages = p.data.pages?.trim() || "";
+
+  if (!v && !vol && !iss && !pages) return "";
+
+  const venueHtml = v ? `<em>${escapeHtml(v)}</em>` : "";
+  const volHtml = vol ? `<em>${escapeHtml(vol)}</em>` : "";
+  const issHtml = iss ? `(${escapeHtml(iss)})` : "";
+  const pagesHtml = pages ? escapeHtml(pages) : "";
+
+  let out = "";
+  if (venueHtml) out += venueHtml;
+  if (venueHtml && (volHtml || issHtml || pagesHtml)) out += ", ";
+  if (volHtml) out += volHtml;
+  if (issHtml) out += issHtml;
+  if ((volHtml || issHtml) && pagesHtml) out += ", ";
+  if (pagesHtml) out += pagesHtml;
+  out += ".";
+  return out;
+}
+
+function citationHtml(p) {
+  const authors = renderAuthorsHtml(p.data.authors);
+  const year = p.data.year;
+  const title = escapeHtml(p.data.title);
+  const venue = venueLineHtml(p);
+
+  // DOI display as full url if present
+  const doiUrl = doiToUrl(p.data.links?.doi || "");
+  const doiHtml = doiUrl ? ` <a href="${escapeHtml(doiUrl)}" target="_blank" rel="noreferrer">${escapeHtml(doiUrl)}</a>` : "";
+
+  const venuePart = venue ? ` ${venue}` : "";
+  return `${authors} (${year}). <span class="pub-title">${title}</span>.${venuePart}${doiHtml}`;
+}
 ---
 
 <BaseLayout title="Publications">
@@ -21,36 +149,64 @@ const byYear = pubs
       <div class="prose">
         <SectionHeader
           title="Publications"
-          subtitle="Grouped by year for fast scanning. (Scholar/ORCID links can be added later.)"
+          subtitle="Status first (in review / submitted / preprint), then selected, then published grouped by year. APA-ish citations; my name bold, students underlined."
         />
       </div>
 
-      <div style="margin-top: 18px;">
-        {Object.entries(byYear).map(([year, list]) => (
-          <div style="margin: 26px 0;">
-            <div style="font-size: 18px; font-weight: 850; margin-bottom: 10px;">
-              {year}
-            </div>
-
-            <div style="display:flex; flex-direction:column;">
-              {list.map((p) => (
-                <div style="padding: 12px 0; border-bottom: 1px solid rgba(15,23,42,.10);">
-                  <div style="font-weight: 850; line-height: 1.25;">
-                    {p.data.title}
-                  </div>
-
-                  <div style="color: var(--muted); margin-top: 6px; line-height: 1.45;">
-                    {p.data.authors}{p.data.venue ? ` • ${p.data.venue}` : ""}
-                  </div>
-
-                  <div style="margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap;">
-                    {p.data.links?.pdf && <a class="btn" href={p.data.links.pdf} target="_blank">PDF</a>}
-                    {p.data.links?.doi && <a class="btn" href={p.data.links.doi} target="_blank">DOI</a>}
-                    {p.data.links?.arxiv && <a class="btn" href={p.data.links.arxiv} target="_blank">arXiv</a>}
-                  </div>
+      {selected.length > 0 && (
+        <div class="pub-block">
+          <h2 class="pub-block-title">Selected</h2>
+          <ol class="pub-list">
+            {selected.map((p) => (
+              <li class="pub-item pub-item--selected">
+                <div class="pub-cite" set:html={citationHtml(p)} />
+                <div class="pub-actions">
+                  {p.data.links?.pdf && <a class="pub-link" href={p.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
+                  {p.data.links?.journal && <a class="pub-link" href={p.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
+                  {p.data.links?.other && <a class="pub-link" href={p.data.links.other} target="_blank" rel="noreferrer">Other</a>}
                 </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {pending.length > 0 && (
+        <div class="pub-block">
+          <h2 class="pub-block-title">In review / submitted / preprint</h2>
+          <ol class="pub-list">
+            {pending.map((p) => (
+              <li class={`pub-item ${p.data.selected ? "pub-item--selected" : ""}`}>
+                <div class="pub-cite" set:html={citationHtml(p)} />
+                <div class="pub-actions">
+                  {p.data.links?.pdf && <a class="pub-link" href={p.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
+                  {p.data.links?.journal && <a class="pub-link" href={p.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
+                  {p.data.links?.other && <a class="pub-link" href={p.data.links.other} target="_blank" rel="noreferrer">Other</a>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      <div class="pub-block">
+        <h2 class="pub-block-title">Published</h2>
+
+        {yearsDesc.map((y) => (
+          <div class="pub-year-group">
+            <div class="pub-year-heading">{y}</div>
+            <ol class="pub-list">
+              {byYear[y].map((p) => (
+                <li class={`pub-item ${p.data.selected ? "pub-item--selected" : ""}`}>
+                  <div class="pub-cite" set:html={citationHtml(p)} />
+                  <div class="pub-actions">
+                    {p.data.links?.pdf && <a class="pub-link" href={p.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
+                    {p.data.links?.journal && <a class="pub-link" href={p.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
+                    {p.data.links?.other && <a class="pub-link" href={p.data.links.other} target="_blank" rel="noreferrer">Other</a>}
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         ))}
       </div>
