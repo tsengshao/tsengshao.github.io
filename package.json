@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "export:cv": "node scripts/export-cv-yaml.mjs",
+    "cv:pdf": "quarto render cv/cv.qmd --to pdf && mv cv/cv.pdf public/",
     "predev": "node scripts/gen-site-meta.mjs",
     "dev": "astro dev",
     "prebuild": "node scripts/gen-site-meta.mjs",

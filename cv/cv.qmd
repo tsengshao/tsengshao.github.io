@@ -1,0 +1,207 @@
+---
+title: "Curriculum Vitae"
+format:
+  pdf:
+    papersize: a4
+    fontsize: 10pt
+    geometry: margin=1in
+    toc: false
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+jupyter: python3
+---
+
+```{python}
+#| output: asis
+import pathlib
+import yaml
+
+# Assume you run "quarto render ..." from the repo root
+project_cv = pathlib.Path(".").resolve()
+project_root = project_cv.parent  # cv/ -> repo root
+yaml_path = (project_root / "src" / "generated" / "cv.generated.yml").resolve()
+
+if not yaml_path.exists():
+    raise FileNotFoundError("YAML not found: " + str(yaml_path))
+
+cv = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+
+def s(x):
+    if x is None:
+        return ""
+    return str(x).strip()
+
+def md_bold(text):
+    return "**" + text + "**"
+
+def authors_line(authors):
+    # authors: [{name: "...", highlight: bool}, ...]
+    if not authors:
+        return ""
+    names = []
+    for a in authors:
+        name = s(a.get("name"))
+        if a.get("highlight"):
+            name = md_bold(name)
+        names.append(name)
+    if len(names) == 1:
+        return names[0]
+    if len(names) == 2:
+        return names[0] + " & " + names[1]
+    return ", ".join(names[:-1]) + ", & " + names[-1]
+
+def doi_to_url(doi):
+    doi = s(doi)
+    if not doi:
+        return ""
+    if doi.startswith("http://") or doi.startswith("https://"):
+        return doi
+    return "https://doi.org/" + doi
+
+def pub_tail(pub):
+    venue = s(pub.get("venue"))
+    vol = s(pub.get("volume"))
+    issue = s(pub.get("issue"))
+    pages = s(pub.get("pages"))
+
+    parts = []
+    if venue:
+        parts.append("*" + venue + "*")
+
+    vi = ""
+    if vol and issue:
+        vi = vol + "(" + issue + ")"
+    elif vol:
+        vi = vol
+    elif issue:
+        vi = "(" + issue + ")"
+
+    if vi:
+        parts.append(vi)
+    if pages:
+        parts.append(pages)
+
+    if not parts:
+        return ""
+    return ", ".join(parts) + "."
+
+def pub_links(pub):
+    links = pub.get("links") or {}
+    doi = s(links.get("doi"))
+    pdf = s(links.get("pdf"))
+    other = s(links.get("other"))
+
+    out = []
+    if doi:
+        out.append("[DOI](" + doi_to_url(doi) + ")")
+    if pdf:
+        out.append("[PDF](" + pdf + ")")
+    if other:
+        out.append("[Link](" + other + ")")
+
+    if not out:
+        return ""
+    return " " + " ".join(out)
+
+def heading(title):
+    print("")
+    print("## " + title)
+    print("")
+```
+
+```{python}
+#| output: asis
+heading("Positions")
+
+for p in cv.get("positions", []) or []:
+    start = s(p.get("start"))
+    end = s(p.get("end"))
+    role = s(p.get("role"))
+    org = s(p.get("org"))
+    location = s(p.get("location"))
+
+    date = ""
+    if start or end:
+        date = start + "–" + end + ": "
+
+    loc = ""
+    if location:
+        loc = " (" + location + ")"
+
+    print("- " + date + md_bold(role) + ", " + org + loc)
+```
+
+
+```{python}
+#| output: asis
+heading("Publications")
+
+pubs = cv.get("publications", []) or []
+
+for pub in pubs:
+    a = authors_line(pub.get("authors", []))
+    y = s(pub.get("year"))
+    title = s(pub.get("title"))
+
+    line = ""
+    if a:
+        line += a + ". "
+    if y:
+        line += "(" + y + "). "
+    line += title + ". "
+
+    tail = pub_tail(pub)
+    if tail:
+        line += tail
+
+    line += pub_links(pub)
+
+    print("- " + line.strip())
+```
+
+```{python}
+#| output: asis
+heading("Honors and Awards")
+
+for h in cv.get("honors_and_awards", []) or []:
+    year = s(h.get("year"))
+    title = s(h.get("title"))
+    org = s(h.get("org"))
+
+    line = ""
+    if year:
+        line += year + ": "
+    line += title
+    if org:
+        line += " - " + org
+
+    print("- " + line)
+```
+
+```{python}
+#| output: asis
+heading("Conferences and Presentations")
+
+for t in cv.get("conferences_and_presentations", []) or []:
+    date = s(t.get("date"))
+    typ = s(t.get("type"))
+    title = s(t.get("title"))
+    event = s(t.get("event"))
+    location = s(t.get("location"))
+
+    prefix = ""
+    if date:
+        prefix += date + " "
+    if typ:
+        prefix += "[" + typ + "] "
+
+    loc = ""
+    if location:
+        loc = " (" + location + ")"
+
+    print("- " + prefix + title + ". " + "*" + event + "*" + loc)
+```
+
