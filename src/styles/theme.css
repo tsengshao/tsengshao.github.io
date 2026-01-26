@@ -213,18 +213,22 @@ code{
 
 /* Apple-like arrows (bottom-right) */
 /* arrows must be clickable above the track */
-.rr-arrows{
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
+.media-block{
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  z-index: 50;          /* higher than anything inside */
-  pointer-events: auto; /* ensure it can receive clicks */
 }
 
-.rr-arrow{
-  pointer-events: auto; /* explicitly clickable */
+/* ✅ controls under the image */
+.rr-controls{
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 讓按鈕回到正常流排版（不要 absolute） */
+.rr-controls .rr-arrow{
+  position: static;
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -237,14 +241,15 @@ code{
   backdrop-filter: blur(10px);
 }
 
-.rr-arrow:hover{ background: rgba(255,255,255,0.92); }
-
-.rr-arrow:disabled{
+.rr-controls .rr-arrow:disabled{
   opacity: 0.35;
   cursor: default;
   filter: grayscale(0.2);
   pointer-events: none;
 }
+
+.rr-arrow:hover{ background: rgba(255,255,255,0.92); }
+
 
 /* Default rendering for carousel slides */
 /* centered + fixed height */
@@ -276,9 +281,15 @@ code{
   .research-row--reverse{
     grid-template-columns: 1fr;
   }
-  /* IMPORTANT: always text first then media */
+
+  /* always text first then media-block */
   .research-row .research-text{ order: 1 !important; }
-  .research-row .media-frame{ order: 2 !important; }
+  .research-row .media-block{  order: 2 !important; }
+
+  /* ✅ inside media-block: image on top, arrows below */
+  .media-block .media-frame{  order: 1 !important; }
+  .media-block .rr-controls{  order: 2 !important; }
+
 }
 
 /* extra small: ensure header/footer never touch edges */

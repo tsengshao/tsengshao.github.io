@@ -38,127 +38,131 @@ const media =
     <p class="keyline">{short}</p>
   </div>
 
-  <div
-    class={`media-frame media-fit-${fit}`}
-    style={`${reverse ? "order:1" : "order:2"}; --ratio:${ratio};`}
-    data-autoplay={autoplay ? "1" : "0"}
-    data-interval={String(interval)}
-    data-debug={debug ? "1" : "0"}
-  >
-    {media.length > 0 ? (
-      <>
-        <div class="rr-track" tabindex="0" aria-label="Project media carousel">
-          {media.map((m, i) => (
-            <div class="rr-slide" data-index={String(i)}>
-              {m.kind === "video" ? (
-                <video
-                  src={m.src}
-                  poster={m.poster}
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  preload="metadata"
-                />
-              ) : (
-                <img src={m.src} alt={m.alt ?? title} loading="lazy" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {media.length > 1 && (
-          <div class="rr-arrows" aria-label="Carousel controls">
-            <button class="rr-arrow" type="button" data-dir="-1" aria-label="Previous">‹</button>
-            <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>
+  <div class="media-block" style={reverse ? "order:1" : "order:2"}>
+    <div
+      class={`media-frame media-fit-${fit}`}
+      style={`--ratio:${ratio};`}
+      data-autoplay={autoplay ? "1" : "0"}
+      data-interval={String(interval)}
+      data-debug={debug ? "1" : "0"}
+    >
+      {media.length > 0 ? (
+        <>
+          <div class="rr-track" tabindex="0" aria-label="Project media carousel">
+            {media.map((m, i) => (
+              <div class="rr-slide" data-index={String(i)}>
+                {m.kind === "video" ? (
+                  <video
+                    src={m.src}
+                    poster={m.poster}
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img src={m.src} alt={m.alt ?? title} loading="lazy" />
+                )}
+              </div>
+            ))}
           </div>
-        )}
-        <script is:inline define:vars={{ uid }}>
-          console.log("uid =", uid);
-        </script>
-        <script is:inline define:vars={{ uid }}>
-          // ✅ 這一行一定會執行（用來驗證）
-          console.log("[RR] script mounted:", uid);
-        
-          const root = document.getElementById(uid);
-          if (!root) {
-            console.warn("[RR] root not found:", uid);
-            return;
-          }
-        
-          // ✅ 不看 console 也能驗證 script 有跑
-          root.dataset.rrMounted = "1";
-        
-          const track   = root.querySelector(".rr-track");
-          const slides  = root.querySelectorAll(".rr-slide");
-          const prevBtn = root.querySelector('.rr-arrow[data-dir="-1"]');
-          const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
-        
-          console.log("[RR] elements:", {
-            track,
-            slides: slides.length,
-            prevBtn,
-            nextBtn
-          });
-        
-          if (!track || slides.length === 0) return;
-        
-          let active = 0;
-        
-          const updateButtons = () => {
-            if (prevBtn) prevBtn.disabled = (active <= 0);
-            if (nextBtn) nextBtn.disabled = (active >= slides.length - 1);
-          };
-        
-          const scrollToIndex = (idx) => {
-            const w = track.clientWidth || 1;
-            active = Math.max(0, Math.min(idx, slides.length - 1));
-        
-            console.log("[RR] scrollToIndex:", active);
-        
-            // Safari 穩定解：暫時關 snap
-            track.style.scrollSnapType = "none";
-            track.scrollTo({ left: active * w, behavior: "smooth" });
-        
-            // 等滾動停了再開回 snap
-            setTimeout(() => {
-              track.style.scrollSnapType = "x mandatory";
-            }, 200);
-        
-            updateButtons();
-          };
-        
-          // 👉 箭頭點擊
-          root.addEventListener("click", (e) => {
-            const btn = e.target.closest(".rr-arrow");
-            if (!btn || btn.disabled) return;
-        
-            e.preventDefault();
-            e.stopPropagation();
-        
-            const dir = Number(btn.dataset.dir);
-            if (!dir) return;
-        
-            console.log("[RR] arrow click:", dir);
-            scrollToIndex(active + dir);
-          }, true);
-        
-          // 👉 滑動同步 active index
-          track.addEventListener("scroll", () => {
-            const w = track.clientWidth || 1;
-            active = Math.round(track.scrollLeft / w);
-            updateButtons();
-          }, { passive: true });
-        
-          // init
-          updateButtons();
-        </script>
-
-      </>
-    ) : (
-      <div style="padding: 16px; color: var(--muted);">
-        This project has no media yet. Add <code>media</code> (or legacy <code>cover/video</code>) in frontmatter.
+  
+        </>
+      ) : (
+        <div style="padding: 16px; color: var(--muted);">
+          This project has no media yet. Add <code>media</code> (or legacy <code>cover/video</code>) in frontmatter.
+        </div>
+      )}
+    </div>
+  
+   
+    {media.length > 1 && (
+      <div class="rr-controls" aria-label="Carousel controls">
+        <button class="rr-arrow" type="button" data-dir="-1" aria-label="Previous">‹</button>
+        <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>
       </div>
     )}
   </div>
+
+  <script is:inline define:vars={{ uid }}>
+    // left and right buttbon
+    // ✅ 這一行一定會執行（用來驗證）
+    console.log("[RR] script mounted:", uid);
+  
+    const root = document.getElementById(uid);
+    if (!root) {
+      console.warn("[RR] root not found:", uid);
+      return;
+    }
+  
+    // ✅ 不看 console 也能驗證 script 有跑
+    root.dataset.rrMounted = "1";
+  
+    const track   = root.querySelector(".rr-track");
+    const slides  = root.querySelectorAll(".rr-slide");
+    const prevBtn = root.querySelector('.rr-arrow[data-dir="-1"]');
+    const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
+  
+    console.log("[RR] elements:", {
+      track,
+      slides: slides.length,
+      prevBtn,
+      nextBtn
+    });
+  
+    if (!track || slides.length === 0) return;
+  
+    let active = 0;
+  
+    const updateButtons = () => {
+      if (prevBtn) prevBtn.disabled = (active <= 0);
+      if (nextBtn) nextBtn.disabled = (active >= slides.length - 1);
+    };
+  
+    const scrollToIndex = (idx) => {
+      const w = track.clientWidth || 1;
+      active = Math.max(0, Math.min(idx, slides.length - 1));
+  
+      console.log("[RR] scrollToIndex:", active);
+  
+      // Safari 穩定解：暫時關 snap
+      track.style.scrollSnapType = "none";
+      track.scrollTo({ left: active * w, behavior: "smooth" });
+  
+      // 等滾動停了再開回 snap
+      setTimeout(() => {
+        track.style.scrollSnapType = "x mandatory";
+      }, 200);
+  
+      updateButtons();
+    };
+  
+    // 👉 箭頭點擊
+    root.addEventListener("click", (e) => {
+      const btn = e.target.closest(".rr-arrow");
+      if (!btn || btn.disabled) return;
+  
+      e.preventDefault();
+      e.stopPropagation();
+  
+      const dir = Number(btn.dataset.dir);
+      if (!dir) return;
+  
+      console.log("[RR] arrow click:", dir);
+      scrollToIndex(active + dir);
+    }, true);
+  
+    // 👉 滑動同步 active index
+    track.addEventListener("scroll", () => {
+      const w = track.clientWidth || 1;
+      active = Math.round(track.scrollLeft / w);
+      updateButtons();
+    }, { passive: true });
+  
+    // init
+    updateButtons();
+  </script>
+
 </div>
+
