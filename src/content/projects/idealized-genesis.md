@@ -11,6 +11,10 @@ media:
   - kind: image
     src: "/figures/poster_tcseed.webp"
     alt: "Overview schematic of convective merging diagnosis"
+
+  - kind: image
+    src: "/figures/poster_tcseed.webp"
+    alt: "Overview schematic of convective merging diagnosis"
 ---
 
 ### Motivation

@@ -222,19 +222,20 @@ code{
 /* ✅ controls under the image */
 .rr-controls{
   display: flex;
-  justify-content: center;
+  justify-content: right;
   gap: 12px;
 }
 
 /* 讓按鈕回到正常流排版（不要 absolute） */
 .rr-controls .rr-arrow{
   position: static;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  border: 1px solid rgba(15,23,42,0.12);
-  background: rgba(255,255,255,0.75);
-  color: rgba(11,18,32,0.85);
+  /*border: 1px solid rgba(15,23,42,0.12);*/
+  border: none;
+  background: #efeff1;
+  color: rgba(0,0,0,.55);
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
@@ -248,7 +249,7 @@ code{
   pointer-events: none;
 }
 
-.rr-arrow:hover{ background: rgba(255,255,255,0.92); }
+.rr-arrow:hover{ background: rgba(0,0,0,.28); }
 
 
 /* Default rendering for carousel slides */
