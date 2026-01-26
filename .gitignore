@@ -27,3 +27,7 @@ pnpm-debug.log*
 # large media files 
 **.mp4
 **.png
+
+# quarto 
+cv/.quarto/
+cv/**/*.quarto_ipynb
