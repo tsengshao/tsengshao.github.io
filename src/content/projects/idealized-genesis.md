@@ -4,12 +4,15 @@ short: We use idealized cloud-resolving experiments to reveal how convective clu
 order: 2
 featured: true
 tags: ["TC genesis", "convective organization", "VVM", "RRCE"]
-cover: "/figures/poster_tcseed.webp"
 ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
 fit: "contain"   # 或 "cover", contain
+
+media:
+  - kind: image
+    src: "/figures/poster_tcseed.webp"
+    alt: "Overview schematic of convective merging diagnosis"
 ---
 
-video: "/videos/tcseed_loop.webm"
 ### Motivation
 Convective clusters can develop rotational structures (TC-seeds), but key uncertainty remains in when and why clusters evolve into vortices.
 

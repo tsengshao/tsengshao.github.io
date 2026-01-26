@@ -2,6 +2,15 @@ import { defineCollection, z } from "astro:content";
 
 const urlOrEmpty = z.union([z.string().url(), z.literal("")]);
 
+/** ---------- Projects (supports multi-media carousel) ---------- */
+const projectMediaItem = z.object({
+  kind: z.enum(["image", "video"]),
+  src: z.string(),                // allow relative paths like "/videos/xxx.webm"
+  alt: z.string().optional(),
+  poster: z.string().optional(),  // recommended for video
+  caption: z.string().optional(), // optional (future use)
+});
+
 const projects = defineCollection({
   type: "content",
   schema: z.object({
@@ -10,10 +19,17 @@ const projects = defineCollection({
     order: z.number().optional(),
     featured: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
-    cover: z.string().optional(),   // e.g., "/figures/idealized_cover.webp"
-    video: z.string().optional(),   // e.g., "/videos/idealized_loop.webm"
-    ratio: z.string().default('16/9'),
-    fit:   z.string().default('contain'),
+
+    // legacy single-media (still supported)
+    cover: z.string().optional(), // e.g., "/figures/idealized_cover.webp"
+    video: z.string().optional(), // e.g., "/videos/idealized_loop.webm"
+
+    // NEW: multiple media (0+). If provided, prefer this over cover/video.
+    media: z.array(projectMediaItem).optional(),
+
+    // layout controls used by ResearchRow/ProjectCard
+    ratio: z.string().default("16/9"),
+    fit: z.enum(["contain", "cover"]).default("contain"),
   }),
 });
 

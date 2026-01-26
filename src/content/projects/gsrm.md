@@ -1,14 +1,34 @@
 ---
-title: GSRM
-short: We use idealized cloud-resolving experiments to reveal how convective clusters couple with circulation and develop into TC-seeds.
+title: Convective Organization in GSRMs
+short: >
+  Process-oriented diagnosis of convective merging and precipitation biases
+  in global storm-resolving models.
+
 order: 1
 featured: true
-tags: ["TC genesis", "convective organization", "VVM", "RRCE"]
-cover: "/figures/gsrm_poster.webp"
-video: "/videos/gsrm_loop.webm"
-ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
-fit: "contain"   # 或 "cover"
+tags:
+  - GSRM
+  - Convective organization
+  - Precipitation bias
+
+ratio: "16/9"
+fit: "contain"
+
+media:
+  - kind: video
+    src: "videos/gsrm_loop.webm"
+    alt: "Convective merging evolution in GSRM simulation"
+
+  - kind: image
+    src: "/figures/poster_tcseed.webp"
+    alt: "Overview schematic of convective merging diagnosis"
+
+  - kind: video
+    src: "/videos/nicam_20150804.mp4"
+    alt: "NICAM diurnal rainfall evolution"
 ---
+
+    poster: "/figures/poster_tcseed.webp"
 
 ### Motivation
 Convective clusters can develop rotational structures (TC-seeds), but key uncertainty remains in when and why clusters evolve into vortices.
