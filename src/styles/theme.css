@@ -223,6 +223,7 @@ code{
 }
 
 /* ===== Publications ===== */
+/* blocks */
 .pub-block{ margin-top: 22px; }
 .pub-block-title{
   font-size: 18px;
@@ -231,51 +232,50 @@ code{
   letter-spacing: -0.2px;
 }
 
-.pub-year-group{ margin-top: 18px; }
-.pub-year-heading{
-  font-size: 16px;
-  font-weight: 850;
-  margin: 14px 0 8px 0;
-  color: var(--text);
+/* separator BETWEEN categories */
+.pub-sep{
+  border: 0;
+  border-top: 1px solid rgba(15,23,42,.10);
+  margin: 22px 0;
 }
 
+/* list layout */
 .pub-list{
   margin: 0;
-  padding-left: 1.2em; /* ordered list indent */
+  padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 0px;
+}
+
+/* remove per-item horizontal line */
+.pub-item{
+  padding: 5px 0;
+  border-bottom: none;
   gap: 10px;
 }
-
-.pub-item{
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(15,23,42,.10);
+/* ONLY for numbered items (Published) */
+.pub-item--num{
+  display: flex;
+  align-items: flex-start; /* align number to first line */
 }
 
-.pub-item--selected{
-  /* subtle highlight: not loud, but noticeable */
-  border-bottom-color: rgba(11,42,111,.18);
-}
 
-.pub-cite{
-  line-height: 1.55;
-  font-size: 15px;
-}
-
+/* citation & meta */
+.pub-cite{ line-height: 1.55; font-size: 15px; }
 .pub-title{ font-weight: 650; }
-.pub-authors{ color: var(--text); }
-.pub-year, .pub-venue, .pub-doi{ color: var(--muted); }
 
+/* author emphasis */
 .author--me{ font-weight: 850; }
 .author--student{ text-decoration: underline; text-underline-offset: 2px; }
 
+/* links */
 .pub-actions{
   margin-top: 8px;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
-
 .pub-link{
   font-size: 13px;
   font-weight: 700;
@@ -283,3 +283,79 @@ code{
   text-decoration: none;
 }
 .pub-link:hover{ text-decoration: underline; }
+
+/* ===== Per-category continuous numbering (custom counter) ===== */
+.pub-counter{ counter-reset: pubitem; }
+
+/* hide default numbering */
+.pub-list--numbered{ list-style: none; }
+
+/* increment counter only on real pub items */
+.pub-list--numbered > .pub-item{
+  counter-increment: pubitem;
+  position: relative;
+  padding-left: 2.2em; /* space for number */
+}
+
+/* display custom number */
+.pub-list--numbered > .pub-item::before{
+  content: counter(pubitem) ".";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 2em;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* reverse-number layout (manual number) */
+.pub-list--revnum{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pub-num{
+  position: static;        /* 重要：不要 absolute */
+  width: 2.2em;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  flex: 0 0 auto;
+  margin-top: 0.05em;      /* 微調基線（可刪掉或調整） */
+}
+
+.pub-body{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* year subtitle inside category lists */
+/* year subtitle inside Published */
+.pub-year{
+  margin-top: 0px;
+  padding-top: 14px;
+  font-size: 16px;
+  font-weight: 850;
+  color: var(--text);
+  list-style: none;
+  padding-left: 0;
+  position: static;
+}
+
+/* ensure year headings don't reserve number space */
+.pub-year{
+  position: static;
+}
+
+/* bullets for Selected/Submitted */
+.pub-list--bullets{
+  list-style: disc;
+  padding-left: 1.2em;
+}
+.pub-item--bullet{
+  padding-left: 0;           /* no number gutter */
+}
+

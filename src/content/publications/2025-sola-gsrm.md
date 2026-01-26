@@ -1,6 +1,7 @@
 ---
 title: "Evaluating Precipitation Enhancement Associated with Convective Mergers in the Global Storm-Resolving Models of DYAMOND Summer Phase"
 year: 2025
+month: 11 #null, or remove this row
 
 authors:
   - name: "Shao-Yu Tseng"
