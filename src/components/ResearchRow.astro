@@ -75,12 +75,9 @@ const media =
     </div>
 
    
-    {media.length > 1 && (
-      <div class="rr-controls">
-        <div class="rr-badge" aria-hidden="true"></div>
-
-
-      
+    <div class="rr-controls">
+      <div class="rr-badge" aria-hidden="true"></div>
+      {media.length > 1 && (
         <div class="rr-arrows" aria-label="carousel controls">
               {/*<button class="rr-arrow" type="button" data-dir="-1" aria-label="Prev">‹</button>
               <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>*/}
@@ -91,9 +88,9 @@ const media =
                 <span aria-hidden="true">›</span>
               </button>
         </div>
-      </div>
+      )}
+    </div>
 
-    )}
   </div>
 </div>
 

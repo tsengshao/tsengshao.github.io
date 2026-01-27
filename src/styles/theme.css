@@ -227,7 +227,9 @@ code{
   align-items: center;
   justify-content: flex-end;     /* arrows 靠右 */
   gap: 12px;
-  min-height: 44px;             /* 穩定高度，避免跳動 */
+  min-height: 33px;             /* 穩定高度，避免跳動 */
+  padding-top: 6px;      /* 跟 badge 的 top 對應 */
+  padding-bottom: 6px;
 }
 
 /* arrows 永遠在最右邊，且寬度固定，方便 badge 避開 */
