@@ -219,49 +219,60 @@ code{
   gap: 10px;
 }
 
-/* ✅ controls under the image */
+/* ===== ResearchRow controls: centered badge + fixed-right arrows ===== */
+
 .rr-controls{
-  display: grid;
-  grid-template-columns: 1fr auto 1fr; /* 左佔位 | badge | arrows區 */
+  position: relative;
+  display: flex;
   align-items: center;
-  column-gap: 16px;
+  justify-content: flex-end;     /* arrows 靠右 */
+  gap: 12px;
+  min-height: 44px;             /* 穩定高度，避免跳動 */
 }
 
-/* 左邊佔位：吃掉空間，讓 badge 可以以整體置中 */
-.rr-left{
-  min-width: 0;
+/* arrows 永遠在最右邊，且寬度固定，方便 badge 避開 */
+.rr-arrows{
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
-/* badge：置中且不影響 arrows */
+/* badge：以 rr-controls 寬度左右置中，但保留右側空間給 arrows */
 .rr-badge{
-  justify-self: center;  /* ✅ 真置中 */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
 
   background: transparent;
-  padding: 0;
+  padding: 0 10px;
   margin: 0;
 
-  font-size: 16px;
-  font-weight: 650;
-  line-height: 1.2;
+  font-size: 18px;              /* 你截圖的感覺接近這個大小 */
+  font-weight: 500;
+  line-height: 1.15;
   opacity: 0.9;
 
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(60vw, 520px);
+  /* ✅ 重點：不要吃掉箭頭區 */
+  max-width: calc(100% - 120px); /* 120px ≈ 2顆按鈕+gap 的保守預留 */
+  white-space: normal;           /* 手機可換行 */
+  overflow-wrap: anywhere;
 
+  /* JS 用 visibility 控制顯示/隱藏，避免 layout 跳 */
+  visibility: hidden;
   pointer-events: none;
   user-select: none;
-  display: none; /* JS 控制顯示 */
 }
 
-
-.rr-arrows{
-  justify-self: end;     /* ✅ 靠右 */
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+/* 小螢幕：箭頭區相對占比變大，所以 badge 再縮一點避免擠到 */
+@media (max-width: 520px){
+  .rr-badge{
+    font-size: 15px;
+    max-width: calc(100% - 104px);
+    padding: 0 8px;
+  }
 }
 
 /* 讓按鈕回到正常流排版（不要 absolute） */
@@ -287,14 +298,8 @@ code{
   pointer-events: none;
 }
 
-.rr-arrow:hover{ background: rgba(0,0,0,.28); }
-
-/* 小螢幕時可再稍微縮 */
-@media (max-width: 520px){
-  .rr-badge{
-    font-size: 14px;
-    max-width: 58%;
-  }
+.rr-arrow:hover{
+  filter: brightness(0.97);
 }
 
 

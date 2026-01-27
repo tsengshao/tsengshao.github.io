@@ -77,7 +77,6 @@ const media =
    
     {media.length > 1 && (
       <div class="rr-controls">
-        <div class="rr-left"></div>
         <div class="rr-badge" aria-hidden="true"></div>
       
         <div class="rr-arrows" aria-label="carousel controls">
@@ -90,7 +89,6 @@ const media =
   </div>
 </div>
 
-
 <script
   is:inline
   define:vars={{
@@ -100,7 +98,7 @@ const media =
 >
 (() => {
   /* ================= DEBUG ================= */
-  const DEBUG = true;
+  const DEBUG = false; // ← 要看 log 再改 true
   const log = (...args) => DEBUG && console.log("[ResearchRow]", ...args);
 
   /* ================= DOM ================= */
@@ -113,33 +111,18 @@ const media =
   const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
   const badge   = root.querySelector(".rr-badge");
 
-  log("root", root);
-  log("track", track);
-  log("slides.length", slides?.length);
-  log("prevBtn", prevBtn);
-  log("nextBtn", nextBtn);
-  log("badge", badge);
-
   if (!track || !slides.length) return;
 
   const total = slides.length;
   let active = 0;
 
-  /* ================= TUNING KNOBS ================= */
-  // ✅ 箭頭滑動速度：越大越慢（建議 900~1200）
-  const ARROW_DURATION_MS = 1000;
+  /* ================= TUNING ================= */
+  const ARROW_DURATION_MS = 1050; // 慢一點、有慣性
 
-  // ✅ 「滾輪感」easing（接近原生 smooth 的慣性）
-  //const easeWheelLike = (t) => 1 - Math.pow(1 - t, 3); // easeOutCubic
-  // const easeWheelLike = (t) =>
-  //   0.5 * (1 - Math.cos(Math.PI * t));
-  const easeWheelLike = (t) => {
-    // 基本 smoothstep（Nuke / GLSL）
-    const s = t * t * (3 - 2 * t);
-  
-    // 尾段慣性補償（非常小）
-    // 讓最後一段不要「突然沒力」
-    return s + 0.08 * t * (1 - t);
+  // Mac 觸控板感（smoothstep + 微尾速）
+  const easeMacTrackpad = (t) => {
+    const s = t * t * (3 - 2 * t);      // smoothstep
+    return s + 0.08 * t * (1 - t);      // 微慣性
   };
 
   /* ================= HELPERS ================= */
@@ -154,10 +137,11 @@ const media =
     if (!badge) return;
     const text = labels[idx] ? String(labels[idx]).trim() : "";
     badge.textContent = text;
-    badge.style.display = text ? "block" : "none";
+    badge.style.visibility = text ? "visible" : "hidden";
+    log("badge →", idx, text);
   };
 
-  /* ================= ANIMATION (arrow only) ================= */
+  /* ================= ARROW ANIMATION ================= */
   let animId = 0;
   const animateTo = (targetLeft, durationMs) => {
     animId++;
@@ -165,20 +149,15 @@ const media =
 
     const startLeft = track.scrollLeft;
     const delta = targetLeft - startLeft;
-
-    log("animateTo", { startLeft, targetLeft, delta, durationMs });
-
     if (Math.abs(delta) < 1) return Promise.resolve();
 
     return new Promise((resolve) => {
       const t0 = performance.now();
 
       const step = (now) => {
-        if (myId !== animId) return; // cancelled by new click
-
+        if (myId !== animId) return;
         const t = Math.min(1, (now - t0) / durationMs);
-        track.scrollLeft = startLeft + delta * easeWheelLike(t);
-
+        track.scrollLeft = startLeft + delta * easeMacTrackpad(t);
         if (t < 1) requestAnimationFrame(step);
         else resolve();
       };
@@ -187,21 +166,18 @@ const media =
     });
   };
 
-  const scrollToIndex = async (i) => {
+  const scrollToIndex = (i) => {
     const w = track.clientWidth || 1;
     const target = clamp(i, 0, total - 1);
     const left = target * w;
-
-    log("scrollToIndex", { i, target, left });
-
-    await animateTo(left, ARROW_DURATION_MS);
+    log("arrow →", target);
+    animateTo(left, ARROW_DURATION_MS);
   };
 
   /* ================= EVENTS ================= */
   if (prevBtn) {
     prevBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      log("PREV CLICK active", active);
       scrollToIndex(active - 1);
     });
   }
@@ -209,12 +185,11 @@ const media =
   if (nextBtn) {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      log("NEXT CLICK active", active);
       scrollToIndex(active + 1);
     });
   }
 
-  // ✅ 核心：active / badge 一律跟 scroll 走（滾輪 & 箭頭都同一套）
+  // scroll = 唯一真相來源（滾輪 & 箭頭共用）
   let raf = 0;
   track.addEventListener(
     "scroll",
@@ -224,10 +199,8 @@ const media =
         const w = track.clientWidth || 1;
         const next = clamp(Math.round(track.scrollLeft / w), 0, total - 1);
         if (next === active) return;
-
         active = next;
         log("scroll → active", active);
-
         updateButtons();
         updateBadge(active);
       });
