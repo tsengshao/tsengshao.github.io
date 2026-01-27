@@ -119,23 +119,35 @@ const media =
   /* ================= TUNING ================= */
   const ARROW_DURATION_MS = 1000; // 慢一點、有慣性
 
-  // 等速段比例：0.55~0.8 都可以試
-  const LINEAR_PORTION = 0.50;
-  
-  /** cos 減速（0→1，尾端斜率=0，很滑順） */
-  const cosEase = (u) => Math.pow( 0.5 * (1 - Math.cos(Math.PI * u)), 0.25);
+  // k = 開始減速的時間比例（0.6~0.85 常用）
+  const K = 0.85;
   
   /**
-   * 先等速（最大速度）到 LINEAR_PORTION，
-   * 再用 cosEase 把剩下的距離收尾減速到 0。
-   * const easeLinearThenCos = (t) => {
+   * 先等速(最大速度)到 K，
+   * 然後速度線性下降到 0（只遞減，不會再加速）。
+   * 回傳 0..1 的位移比例。
    */
   const easeMacTrackpad = (t) => {
-    const k = LINEAR_PORTION;
-    if (t <= k) return t; // 等速（最大速度）
-    const u = (t - k) / (1 - k); // 尾段 0..1
-    return k + (1 - k) * cosEase(u);
+    const k = K;
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+  
+    // v0 選擇讓最後剛好走到 1（歸一化）
+    const v0 = 2 / (1 + k);
+  
+    if (t <= k) {
+      // 等速段：x = v0 * t
+      return v0 * t;
+    }
+  
+    // 減速段：v(s) = v0 * (1 - (s-k)/(1-k))
+    const u = t - k;
+    const L = 1 - k;
+  
+    // 積分得到位移
+    return v0 * k + v0 * (u - (u * u) / (2 * L));
   };
+  
 
 
   /* ================= HELPERS ================= */
