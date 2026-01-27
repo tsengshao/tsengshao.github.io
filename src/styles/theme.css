@@ -234,7 +234,7 @@ code{
 .rr-arrows{
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   flex: 0 0 auto;
   white-space: nowrap;
 }
@@ -285,7 +285,8 @@ code{
   border: none;
   background: #efeff1;
   color: rgba(0,0,0,.55);
-  font-size: 22px;
+  font-size: 25px;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(10px);

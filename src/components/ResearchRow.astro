@@ -117,13 +117,26 @@ const media =
   let active = 0;
 
   /* ================= TUNING ================= */
-  const ARROW_DURATION_MS = 1050; // 慢一點、有慣性
+  const ARROW_DURATION_MS = 1000; // 慢一點、有慣性
 
-  // Mac 觸控板感（smoothstep + 微尾速）
+  // 等速段比例：0.55~0.8 都可以試
+  const LINEAR_PORTION = 0.50;
+  
+  /** cos 減速（0→1，尾端斜率=0，很滑順） */
+  const cosEase = (u) => Math.pow( 0.5 * (1 - Math.cos(Math.PI * u)), 0.25);
+  
+  /**
+   * 先等速（最大速度）到 LINEAR_PORTION，
+   * 再用 cosEase 把剩下的距離收尾減速到 0。
+   * const easeLinearThenCos = (t) => {
+   */
   const easeMacTrackpad = (t) => {
-    const s = t * t * (3 - 2 * t);      // smoothstep
-    return s + 0.08 * t * (1 - t);      // 微慣性
+    const k = LINEAR_PORTION;
+    if (t <= k) return t; // 等速（最大速度）
+    const u = (t - k) / (1 - k); // 尾段 0..1
+    return k + (1 - k) * cosEase(u);
   };
+
 
   /* ================= HELPERS ================= */
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
