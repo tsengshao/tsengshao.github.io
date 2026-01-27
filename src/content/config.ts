@@ -8,7 +8,7 @@ const projectMediaItem = z.object({
   src: z.string(),                // allow relative paths like "/videos/xxx.webm"
   alt: z.string().optional(),
   poster: z.string().optional(),  // recommended for video
-  caption: z.string().optional(), // optional (future use)
+  label: z.string().optional(), // optional (future use)
 });
 
 const projects = defineCollection({

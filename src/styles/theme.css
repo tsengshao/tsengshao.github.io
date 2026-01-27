@@ -221,9 +221,47 @@ code{
 
 /* ✅ controls under the image */
 .rr-controls{
-  display: flex;
-  justify-content: right;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* 左佔位 | badge | arrows區 */
+  align-items: center;
+  column-gap: 16px;
+}
+
+/* 左邊佔位：吃掉空間，讓 badge 可以以整體置中 */
+.rr-left{
+  min-width: 0;
+}
+
+/* badge：置中且不影響 arrows */
+.rr-badge{
+  justify-self: center;  /* ✅ 真置中 */
+  text-align: center;
+
+  background: transparent;
+  padding: 0;
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.2;
+  opacity: 0.9;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(60vw, 520px);
+
+  pointer-events: none;
+  user-select: none;
+  display: none; /* JS 控制顯示 */
+}
+
+
+.rr-arrows{
+  justify-self: end;     /* ✅ 靠右 */
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* 讓按鈕回到正常流排版（不要 absolute） */
@@ -250,6 +288,14 @@ code{
 }
 
 .rr-arrow:hover{ background: rgba(0,0,0,.28); }
+
+/* 小螢幕時可再稍微縮 */
+@media (max-width: 520px){
+  .rr-badge{
+    font-size: 14px;
+    max-width: 58%;
+  }
+}
 
 
 /* Default rendering for carousel slides */

@@ -47,7 +47,6 @@ const media =
       data-debug={debug ? "1" : "0"}
     >
       {media.length > 0 ? (
-        <>
           <div class="rr-track" tabindex="0" aria-label="Project media carousel">
             {media.map((m, i) => (
               <div class="rr-slide" data-index={String(i)}>
@@ -68,101 +67,176 @@ const media =
             ))}
           </div>
   
-        </>
       ) : (
         <div style="padding: 16px; color: var(--muted);">
           This project has no media yet. Add <code>media</code> (or legacy <code>cover/video</code>) in frontmatter.
         </div>
       )}
     </div>
-  
+
    
     {media.length > 1 && (
-      <div class="rr-controls" aria-label="Carousel controls">
-        <button class="rr-arrow" type="button" data-dir="-1" aria-label="Previous">‹</button>
-        <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>
+      <div class="rr-controls">
+        <div class="rr-left"></div>
+        <div class="rr-badge" aria-hidden="true"></div>
+      
+        <div class="rr-arrows" aria-label="carousel controls">
+              <button class="rr-arrow" type="button" data-dir="-1" aria-label="Prev">‹</button>
+              <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>
+        </div>
       </div>
+
     )}
   </div>
-
-  <script is:inline define:vars={{ uid }}>
-    // left and right buttbon
-    // ✅ 這一行一定會執行（用來驗證）
-    console.log("[RR] script mounted:", uid);
-  
-    const root = document.getElementById(uid);
-    if (!root) {
-      console.warn("[RR] root not found:", uid);
-      return;
-    }
-  
-    // ✅ 不看 console 也能驗證 script 有跑
-    root.dataset.rrMounted = "1";
-  
-    const track   = root.querySelector(".rr-track");
-    const slides  = root.querySelectorAll(".rr-slide");
-    const prevBtn = root.querySelector('.rr-arrow[data-dir="-1"]');
-    const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
-  
-    console.log("[RR] elements:", {
-      track,
-      slides: slides.length,
-      prevBtn,
-      nextBtn
-    });
-  
-    if (!track || slides.length === 0) return;
-  
-    let active = 0;
-  
-    const updateButtons = () => {
-      if (prevBtn) prevBtn.disabled = (active <= 0);
-      if (nextBtn) nextBtn.disabled = (active >= slides.length - 1);
-    };
-  
-    const scrollToIndex = (idx) => {
-      const w = track.clientWidth || 1;
-      active = Math.max(0, Math.min(idx, slides.length - 1));
-  
-      console.log("[RR] scrollToIndex:", active);
-  
-      // Safari 穩定解：暫時關 snap
-      track.style.scrollSnapType = "none";
-      track.scrollTo({ left: active * w, behavior: "smooth" });
-  
-      // 等滾動停了再開回 snap
-      setTimeout(() => {
-        track.style.scrollSnapType = "x mandatory";
-      }, 200);
-  
-      updateButtons();
-    };
-  
-    // 👉 箭頭點擊
-    root.addEventListener("click", (e) => {
-      const btn = e.target.closest(".rr-arrow");
-      if (!btn || btn.disabled) return;
-  
-      e.preventDefault();
-      e.stopPropagation();
-  
-      const dir = Number(btn.dataset.dir);
-      if (!dir) return;
-  
-      console.log("[RR] arrow click:", dir);
-      scrollToIndex(active + dir);
-    }, true);
-  
-    // 👉 滑動同步 active index
-    track.addEventListener("scroll", () => {
-      const w = track.clientWidth || 1;
-      active = Math.round(track.scrollLeft / w);
-      updateButtons();
-    }, { passive: true });
-  
-    // init
-    updateButtons();
-  </script>
-
 </div>
 
+
+<script
+  is:inline
+  define:vars={{
+    uid,
+    labels: media.map(m => (m.label ?? "")),
+  }}
+>
+(() => {
+  /* ================= DEBUG ================= */
+  const DEBUG = true;
+  const log = (...args) => DEBUG && console.log("[ResearchRow]", ...args);
+
+  /* ================= DOM ================= */
+  const root = document.getElementById(uid);
+  if (!root) return;
+
+  const track   = root.querySelector(".rr-track");
+  const slides  = root.querySelectorAll(".rr-slide");
+  const prevBtn = root.querySelector('.rr-arrow[data-dir="-1"]');
+  const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
+  const badge   = root.querySelector(".rr-badge");
+
+  log("root", root);
+  log("track", track);
+  log("slides.length", slides?.length);
+  log("prevBtn", prevBtn);
+  log("nextBtn", nextBtn);
+  log("badge", badge);
+
+  if (!track || !slides.length) return;
+
+  const total = slides.length;
+  let active = 0;
+
+  /* ================= TUNING KNOBS ================= */
+  // ✅ 箭頭滑動速度：越大越慢（建議 900~1200）
+  const ARROW_DURATION_MS = 1000;
+
+  // ✅ 「滾輪感」easing（接近原生 smooth 的慣性）
+  //const easeWheelLike = (t) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+  // const easeWheelLike = (t) =>
+  //   0.5 * (1 - Math.cos(Math.PI * t));
+  const easeWheelLike = (t) => {
+    // 基本 smoothstep（Nuke / GLSL）
+    const s = t * t * (3 - 2 * t);
+  
+    // 尾段慣性補償（非常小）
+    // 讓最後一段不要「突然沒力」
+    return s + 0.08 * t * (1 - t);
+  };
+
+  /* ================= HELPERS ================= */
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+  const updateButtons = () => {
+    if (prevBtn) prevBtn.disabled = active <= 0;
+    if (nextBtn) nextBtn.disabled = active >= total - 1;
+  };
+
+  const updateBadge = (idx) => {
+    if (!badge) return;
+    const text = labels[idx] ? String(labels[idx]).trim() : "";
+    badge.textContent = text;
+    badge.style.display = text ? "block" : "none";
+  };
+
+  /* ================= ANIMATION (arrow only) ================= */
+  let animId = 0;
+  const animateTo = (targetLeft, durationMs) => {
+    animId++;
+    const myId = animId;
+
+    const startLeft = track.scrollLeft;
+    const delta = targetLeft - startLeft;
+
+    log("animateTo", { startLeft, targetLeft, delta, durationMs });
+
+    if (Math.abs(delta) < 1) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+
+      const step = (now) => {
+        if (myId !== animId) return; // cancelled by new click
+
+        const t = Math.min(1, (now - t0) / durationMs);
+        track.scrollLeft = startLeft + delta * easeWheelLike(t);
+
+        if (t < 1) requestAnimationFrame(step);
+        else resolve();
+      };
+
+      requestAnimationFrame(step);
+    });
+  };
+
+  const scrollToIndex = async (i) => {
+    const w = track.clientWidth || 1;
+    const target = clamp(i, 0, total - 1);
+    const left = target * w;
+
+    log("scrollToIndex", { i, target, left });
+
+    await animateTo(left, ARROW_DURATION_MS);
+  };
+
+  /* ================= EVENTS ================= */
+  if (prevBtn) {
+    prevBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      log("PREV CLICK active", active);
+      scrollToIndex(active - 1);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      log("NEXT CLICK active", active);
+      scrollToIndex(active + 1);
+    });
+  }
+
+  // ✅ 核心：active / badge 一律跟 scroll 走（滾輪 & 箭頭都同一套）
+  let raf = 0;
+  track.addEventListener(
+    "scroll",
+    () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const w = track.clientWidth || 1;
+        const next = clamp(Math.round(track.scrollLeft / w), 0, total - 1);
+        if (next === active) return;
+
+        active = next;
+        log("scroll → active", active);
+
+        updateButtons();
+        updateBadge(active);
+      });
+    },
+    { passive: true }
+  );
+
+  /* ================= INIT ================= */
+  updateButtons();
+  updateBadge(active);
+})();
+</script>

@@ -16,16 +16,18 @@ fit: "contain"
 
 media:
   - kind: video
-    src: "videos/gsrm_loop.webm"
+    src: "/videos/gsrm_loop.webm"
     alt: "Convective merging evolution in GSRM simulation"
 
   - kind: image
     src: "/figures/poster_tcseed.webp"
     alt: "Overview schematic of convective merging diagnosis"
+    label: "seed genesis"
 
   - kind: video
     src: "/videos/nicam_20150804.mp4"
     alt: "NICAM diurnal rainfall evolution"
+    label: "mp4 file"
 ---
 
     poster: "/figures/poster_tcseed.webp"
