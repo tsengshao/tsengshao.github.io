@@ -1,8 +1,7 @@
 ---
-title: Convective Organization in GSRMs
-short: >
-  Process-oriented diagnosis of convective merging and precipitation biases
-  in global storm-resolving models.
+title: Process-oriented diagnostics of convective processes in GSRMs
+short: What controls biases in convective organization, and how can we diagnose them quantitatively?
+summary: This research topic focuses on the quantitative and physically interpretable characterization of key convective processes in global storm-resolving models (GSRMs) through integrated comparisons with large-eddy simulations (LES) and high-resolution observations. By applying quantitative, process-oriented diagnostics across models and scales, I assess the physical consistency of convective processes across different modeling frameworks, identify the physical origins of model biases, and provide guidance for improving the representation of convection in GSRMs.
 
 order: 1
 featured: true
@@ -10,6 +9,11 @@ tags:
   - GSRM
   - Convective organization
   - Precipitation bias
+keywords:
+  - Global storm-resolving models
+  - Process-oriented diagnostics
+  - Quantitative model evaluation
+  - Convective processes
 
 ratio: "16/9"
 fit: "contain"
@@ -30,15 +34,5 @@ media:
     label: "mp4 file"
 ---
 
-    poster: "/figures/poster_tcseed.webp"
+Quantifying convective processes in GSRMs
 
-### Motivation
-Convective clusters can develop rotational structures (TC-seeds), but key uncertainty remains in when and why clusters evolve into vortices.
-
-### What I do
-- Idealized RRCE restart experiments with controlled rotation
-- Quantify convection–circulation coupling
-- Diagnose low-level inflow and vorticity spin-up
-
-### Key result
-(你可以放一張精選圖在 cover 或本文內)

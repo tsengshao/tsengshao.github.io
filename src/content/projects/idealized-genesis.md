@@ -1,6 +1,8 @@
 ---
-title: Idealized TC-seed Genesis in RRCE
-short: We use idealized cloud-resolving experiments to reveal how convective clusters couple with circulation and develop into TC-seeds.
+title: Physical mechanisms of convection–circulation coupling in idealized simulations
+short: How does convection interact with circulation to generate moist vortices?
+summary: This research topic focuses on understanding the physical mechanisms governing the coupling between convection and circulation using idealized cloud-resolving simulations. Using idealized simulations with the Vector Vorticity Equation cloud-resolving model (VVM), I investigate how interactions among organized convection, convective clusters, moisture aggregation, and circulation lead to the formation and intensification of moist vortices. These idealized experiments aim to isolate causal pathways underlying convection–circulation coupling, providing a physically grounded framework for interpreting tropical cyclone seed genesis and related convective phenomena.
+
 order: 2
 featured: true
 tags: ["TC genesis", "convective organization", "VVM", "RRCE"]
@@ -15,13 +17,8 @@ media:
 
 ---
 
+Understanding mechanisms with idealized CRM
+
 ### Motivation
-Convective clusters can develop rotational structures (TC-seeds), but key uncertainty remains in when and why clusters evolve into vortices.
+an organized convective system embedded within an aggregated moist environment, in which the induced circulation develops on spatial scales comparable to those of the convective cluster itself
 
-### What I do
-- Idealized RRCE restart experiments with controlled rotation
-- Quantify convection–circulation coupling
-- Diagnose low-level inflow and vorticity spin-up
-
-### Key result
-(你可以放一張精選圖在 cover 或本文內)

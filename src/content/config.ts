@@ -15,7 +15,8 @@ const projects = defineCollection({
   type: "content",
   schema: z.object({
     title: z.string(),
-    short: z.string(), // 1 sentence summary
+    short: z.string().optional(), // 1 sentence summary
+    summary: z.string().optional(), 
     order: z.number().optional(),
     featured: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
