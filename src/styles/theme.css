@@ -75,6 +75,19 @@ p{
 .lead{
   margin-top: 10px;
   color: var(--muted);
+  text-align: justify;
+  text-justify: inter-word;
+  text-align-last: left;
+}
+
+/* ===== Punch line (one-sentence hook) ===== */
+.punchline{
+  margin-top: 10px;
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: -0.15px;
+  line-height: 1.55;
+  font-size: clamp(16px, 1.35vw, 19px);
 }
 
 code{
@@ -83,6 +96,13 @@ code{
   background: rgba(2,6,23,0.05);
   padding: 2px 6px;
   border-radius: 8px;
+}
+
+/* ===== Desktop: vertically center media block within research row ===== */
+@media (min-width: 901px){
+  .research-row .media-block{
+    align-self: center; /* center the whole media block vs the text column */
+  }
 }
 
 /* ===== Header (sticky, safe padding) ===== */
@@ -174,6 +194,9 @@ code{
   color: var(--muted);
   line-height: 1.7;
   font-size: var(--p);
+  text-align: justify;
+  text-justify: inter-word;
+  text-align-last: left;
 }
 
 /* ===== Media: fixed size across blocks (carousel-ready) ===== */

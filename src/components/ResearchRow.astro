@@ -3,6 +3,7 @@ const {
   index = 0,
   title,
   short,
+  summary,
 
   // legacy
   cover,
@@ -35,7 +36,8 @@ const media =
   <div class="research-text" style={reverse ? "order:2" : "order:1"}>
     <div class="kicker">Research topic {index + 1}</div>
     <h2 style="margin:0;">{title}</h2>
-    <p class="keyline">{short}</p>
+    <p class="punchline">{short}</p>
+    <p class="keyline">{summary}</p>
   </div>
 
   <div class="media-block" style={reverse ? "order:1" : "order:2"}>
