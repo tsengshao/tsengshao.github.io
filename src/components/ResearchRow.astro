@@ -1,247 +1,207 @@
 ---
+import { isExternalUrl, withBase } from "../lib/urls";
+
+interface MediaItem {
+  kind: "image" | "video";
+  src: string;
+  alt?: string;
+  poster?: string;
+  label?: string;
+  link?: string;
+}
+
+interface Props {
+  index?: number;
+  title: string;
+  short?: string;
+  summary?: string;
+  href?: string;
+  cover?: string;
+  video?: string;
+  media?: MediaItem[];
+  fit?: "contain" | "cover";
+  ratio?: string;
+  autoplay?: boolean;
+  showText?: boolean;
+}
+
 const {
   index = 0,
   title,
   short,
   summary,
-
-  // legacy
+  href,
   cover,
   video,
-
-  // new: array of media
-  // [{ kind:"image"|"video", src:"...", alt?, poster?, caption? }]
   media: mediaProp = [],
-
   fit = "contain",
   ratio = "16/9",
-
   autoplay = true,
-  interval = 6000,
-  debug = false, // 需要 debug 就在 index.astro 傳 debug={true}
-} = Astro.props;
+  showText = true,
+}: Props = Astro.props;
 
-const reverse = (index % 2 === 1);
-const uid = `rr-${index}`;
-
-// normalize media: prefer media[]; fallback to legacy
-const media =
-  (mediaProp?.length ? mediaProp : [
-    ...(video ? [{ kind: "video", src: video }] : []),
-    ...(cover ? [{ kind: "image", src: cover, alt: title }] : []),
-  ]);
+const reverse = index % 2 === 1;
+const legacyMedia: MediaItem[] = [];
+if (video) legacyMedia.push({ kind: "video", src: video, alt: title });
+if (cover) legacyMedia.push({ kind: "image", src: cover, alt: title });
+const rawMedia: MediaItem[] = mediaProp?.length ? mediaProp : legacyMedia;
+const media: MediaItem[] = rawMedia.map((item) => ({
+  ...item,
+  src: withBase(item.src),
+  poster: item.poster ? withBase(item.poster) : undefined,
+  link: item.link ? withBase(item.link) : undefined,
+}));
+const labels = media.map((item) => item.label ?? item.alt ?? "");
 ---
 
-<div id={uid} class={`research-row ${reverse ? "research-row--reverse" : ""}`}>
-  <div class="research-text" style={reverse ? "order:2" : "order:1"}>
-    <div class="kicker">Research topic {index + 1}</div>
-    <h2 style="margin:0;">{title}</h2>
-    <p class="punchline">{short}</p>
-    <p class="keyline">{summary}</p>
-  </div>
+<div
+  class={`research-row ${reverse ? "research-row--reverse" : ""} ${showText ? "" : "research-row--media-only"}`}
+  data-research-carousel
+  data-labels={JSON.stringify(labels)}
+>
+  {showText && (
+    <div class="research-text" style={reverse ? "order:2" : "order:1"}>
+      <div class="kicker">Research topic {index + 1}</div>
+      <h2 style="margin:0;">{title}</h2>
+      {short && <p class="punchline">{short}</p>}
+      {summary && <p class="keyline">{summary}</p>}
+      {href && <a class="research-more" href={withBase(href)}>Explore this research <span aria-hidden="true">→</span></a>}
+    </div>
+  )}
 
-  <div class="media-block" style={reverse ? "order:1" : "order:2"}>
-    <div
-      class={`media-frame media-fit-${fit}`}
-      style={`--ratio:${ratio};`}
-      data-autoplay={autoplay ? "1" : "0"}
-      data-interval={String(interval)}
-      data-debug={debug ? "1" : "0"}
-    >
+  <div class="media-block" style={!showText || reverse ? "order:1" : "order:2"}>
+    <div class={`media-frame media-fit-${fit}`} style={`--ratio:${ratio};`}>
       {media.length > 0 ? (
-          <div class="rr-track" tabindex="0" aria-label="Project media carousel">
-            {media.map((m, i) => (
-              <div class="rr-slide" data-index={String(i)}>
-                {m.kind === "video" ? (
-                  <video
-                    src={m.src}
-                    poster={m.poster}
-                    autoplay
-                    muted
-                    loop
-                    playsinline
-                    preload="metadata"
-                  />
-                ) : (
-                  <img src={m.src} alt={m.alt ?? title} loading="lazy" />
-                )}
-              </div>
-            ))}
-          </div>
-  
+        <div class="rr-track" tabindex="0" aria-label={`${title} media carousel`}>
+          {media.map((item, mediaIndex) => (
+            <div
+              class="rr-slide"
+              data-index={String(mediaIndex)}
+              role="group"
+              aria-label={`${mediaIndex + 1} of ${media.length}: ${item.alt ?? item.label ?? title}`}
+            >
+              {item.link ? (
+                <a
+                  class="rr-media-link"
+                  href={item.link}
+                  target={isExternalUrl(item.link) ? "_blank" : undefined}
+                  rel={isExternalUrl(item.link) ? "noreferrer noopener" : undefined}
+                  aria-label={`Open ${item.label ?? item.alt ?? title}`}
+                >
+                  {item.kind === "video" ? (
+                    <video
+                      src={item.src}
+                      poster={item.poster}
+                      aria-label={item.alt ?? title}
+                      autoplay={autoplay}
+                      controls
+                      muted
+                      loop
+                      playsinline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img src={item.src} alt={item.alt ?? title} loading="lazy" />
+                  )}
+                </a>
+              ) : item.kind === "video" ? (
+                <video
+                  src={item.src}
+                  poster={item.poster}
+                  aria-label={item.alt ?? title}
+                  autoplay={autoplay}
+                  controls
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                />
+              ) : (
+                <img src={item.src} alt={item.alt ?? title} loading="lazy" />
+              )}
+            </div>
+          ))}
+        </div>
       ) : (
-        <div style="padding: 16px; color: var(--muted);">
-          This project has no media yet. Add <code>media</code> (or legacy <code>cover/video</code>) in frontmatter.
-        </div>
+        <div class="media-empty">Media for this research topic will be added soon.</div>
       )}
     </div>
 
-   
-    <div class="rr-controls">
-      <div class="rr-badge" aria-hidden="true"></div>
-      {media.length > 1 && (
-        <div class="rr-arrows" aria-label="carousel controls">
-              {/*<button class="rr-arrow" type="button" data-dir="-1" aria-label="Prev">‹</button>
-              <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">›</button>*/}
-              <button class="rr-arrow" type="button" data-dir="-1" aria-label="Prev">
-                <span aria-hidden="true">‹</span>
-              </button>
-              <button class="rr-arrow" type="button" data-dir="1" aria-label="Next">
-                <span aria-hidden="true">›</span>
-              </button>
-        </div>
-      )}
-    </div>
-
+    {media.length > 0 && (
+      <div class="rr-controls">
+        <div class="rr-badge" role="status" aria-live="polite"></div>
+        {media.length > 1 && (
+          <div class="rr-arrows" aria-label="Carousel controls">
+            <button class="rr-arrow" type="button" data-dir="-1" aria-label={`Previous media for ${title}`}>
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button class="rr-arrow" type="button" data-dir="1" aria-label={`Next media for ${title}`}>
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        )}
+      </div>
+    )}
   </div>
 </div>
 
-<script
-  is:inline
-  define:vars={{
-    uid,
-    labels: media.map(m => (m.label ?? "")),
-  }}
->
-(() => {
-  /* ================= DEBUG ================= */
-  const DEBUG = false; // ← 要看 log 再改 true
-  const log = (...args) => DEBUG && console.log("[ResearchRow]", ...args);
+<script>
+  const initializeResearchCarousels = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-research-carousel]:not([data-carousel-ready])")
+      .forEach((root) => {
+        root.dataset.carouselReady = "true";
 
-  /* ================= DOM ================= */
-  const root = document.getElementById(uid);
-  if (!root) return;
+        const track = root.querySelector<HTMLElement>(".rr-track");
+        const slides = root.querySelectorAll<HTMLElement>(".rr-slide");
+        const previousButton = root.querySelector<HTMLButtonElement>('.rr-arrow[data-dir="-1"]');
+        const nextButton = root.querySelector<HTMLButtonElement>('.rr-arrow[data-dir="1"]');
+        const badge = root.querySelector<HTMLElement>(".rr-badge");
+        if (!track || slides.length === 0) return;
 
-  const track   = root.querySelector(".rr-track");
-  const slides  = root.querySelectorAll(".rr-slide");
-  const prevBtn = root.querySelector('.rr-arrow[data-dir="-1"]');
-  const nextBtn = root.querySelector('.rr-arrow[data-dir="1"]');
-  const badge   = root.querySelector(".rr-badge");
+        const labels = JSON.parse(root.dataset.labels || "[]") as string[];
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let active = 0;
+        let animationFrame = 0;
 
-  if (!track || !slides.length) return;
+        if (reducedMotion) {
+          root.querySelectorAll<HTMLVideoElement>("video").forEach((video) => video.pause());
+        }
 
-  const total = slides.length;
-  let active = 0;
+        const update = () => {
+          if (previousButton) previousButton.disabled = active === 0;
+          if (nextButton) nextButton.disabled = active === slides.length - 1;
+          if (badge) {
+            badge.textContent = labels[active] || `${active + 1} of ${slides.length}`;
+            badge.style.visibility = "visible";
+          }
+        };
 
-  /* ================= TUNING ================= */
-  const ARROW_DURATION_MS = 1000; // 慢一點、有慣性
+        const scrollToIndex = (index: number) => {
+          const target = Math.max(0, Math.min(slides.length - 1, index));
+          track.scrollTo({
+            left: target * track.clientWidth,
+            behavior: reducedMotion ? "auto" : "smooth",
+          });
+        };
 
-  // k = 開始減速的時間比例（0.6~0.85 常用）
-  const K = 0.85;
-  
-  /**
-   * 先等速(最大速度)到 K，
-   * 然後速度線性下降到 0（只遞減，不會再加速）。
-   * 回傳 0..1 的位移比例。
-   */
-  const easeMacTrackpad = (t) => {
-    const k = K;
-    if (t <= 0) return 0;
-    if (t >= 1) return 1;
-  
-    // v0 選擇讓最後剛好走到 1（歸一化）
-    const v0 = 2 / (1 + k);
-  
-    if (t <= k) {
-      // 等速段：x = v0 * t
-      return v0 * t;
-    }
-  
-    // 減速段：v(s) = v0 * (1 - (s-k)/(1-k))
-    const u = t - k;
-    const L = 1 - k;
-  
-    // 積分得到位移
-    return v0 * k + v0 * (u - (u * u) / (2 * L));
-  };
-  
+        previousButton?.addEventListener("click", () => scrollToIndex(active - 1));
+        nextButton?.addEventListener("click", () => scrollToIndex(active + 1));
+        track.addEventListener(
+          "scroll",
+          () => {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = requestAnimationFrame(() => {
+              active = Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / (track.clientWidth || 1))));
+              update();
+            });
+          },
+          { passive: true },
+        );
 
-
-  /* ================= HELPERS ================= */
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-  const updateButtons = () => {
-    if (prevBtn) prevBtn.disabled = active <= 0;
-    if (nextBtn) nextBtn.disabled = active >= total - 1;
-  };
-
-  const updateBadge = (idx) => {
-    if (!badge) return;
-    const text = labels[idx] ? String(labels[idx]).trim() : "";
-    badge.textContent = text;
-    badge.style.visibility = text ? "visible" : "hidden";
-    log("badge →", idx, text);
-  };
-
-  /* ================= ARROW ANIMATION ================= */
-  let animId = 0;
-  const animateTo = (targetLeft, durationMs) => {
-    animId++;
-    const myId = animId;
-
-    const startLeft = track.scrollLeft;
-    const delta = targetLeft - startLeft;
-    if (Math.abs(delta) < 1) return Promise.resolve();
-
-    return new Promise((resolve) => {
-      const t0 = performance.now();
-
-      const step = (now) => {
-        if (myId !== animId) return;
-        const t = Math.min(1, (now - t0) / durationMs);
-        track.scrollLeft = startLeft + delta * easeMacTrackpad(t);
-        if (t < 1) requestAnimationFrame(step);
-        else resolve();
-      };
-
-      requestAnimationFrame(step);
-    });
-  };
-
-  const scrollToIndex = (i) => {
-    const w = track.clientWidth || 1;
-    const target = clamp(i, 0, total - 1);
-    const left = target * w;
-    log("arrow →", target);
-    animateTo(left, ARROW_DURATION_MS);
-  };
-
-  /* ================= EVENTS ================= */
-  if (prevBtn) {
-    prevBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      scrollToIndex(active - 1);
-    });
-  }
-
-  if (nextBtn) {
-    nextBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      scrollToIndex(active + 1);
-    });
-  }
-
-  // scroll = 唯一真相來源（滾輪 & 箭頭共用）
-  let raf = 0;
-  track.addEventListener(
-    "scroll",
-    () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const w = track.clientWidth || 1;
-        const next = clamp(Math.round(track.scrollLeft / w), 0, total - 1);
-        if (next === active) return;
-        active = next;
-        log("scroll → active", active);
-        updateButtons();
-        updateBadge(active);
+        update();
       });
-    },
-    { passive: true }
-  );
+  };
 
-  /* ================= INIT ================= */
-  updateButtons();
-  updateBadge(active);
-})();
+  initializeResearchCarousels();
 </script>

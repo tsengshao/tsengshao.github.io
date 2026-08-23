@@ -13,12 +13,19 @@ media:
   - kind: image
     src: "/figures/poster_tcseed.webp"
     alt: "Overview schematic of convective merging diagnosis"
-    label: 'HaHaHa'
+    label: "Moist vortex genesis"
+    link: "https://doi.org/10.1029/2025JD045526"
 
 ---
 
-Understanding mechanisms with idealized CRM
+### Research question
+
+How do organized convection, moisture aggregation, and low-level inflow interact to form and intensify a moist vortex?
 
 ### Motivation
-an organized convective system embedded within an aggregated moist environment, in which the induced circulation develops on spatial scales comparable to those of the convective cluster itself
 
+An organized convective system can become embedded within an aggregated moist environment while its induced circulation develops on spatial scales comparable to the convective cluster. Isolating that coupling is essential for understanding tropical cyclone seed genesis.
+
+### Approach
+
+I use idealized cloud-resolving simulations with the Vector Vorticity Equation model (VVM) to separate causal pathways that are difficult to distinguish in observations or fully realistic simulations.

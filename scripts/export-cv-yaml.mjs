@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import fg from "fast-glob";
-import matter from "gray-matter";
 import yaml from "js-yaml";
+import { parseFrontmatter } from "./frontmatter.mjs";
 
 const REPO_ROOT = process.cwd();
 
@@ -17,7 +17,7 @@ function readMdFrontmatter(dirName) {
   return files.map((rel) => {
     const full = path.join(baseDir, rel);
     const raw = fs.readFileSync(full, "utf-8");
-    const { data } = matter(raw);
+    const data = parseFrontmatter(raw, full);
 
     return {
       __id: path.basename(rel, path.extname(rel)),
@@ -69,6 +69,7 @@ function normalizePublications(items) {
       id: __id,
       title: String(data.title).trim(),
       year: asInt(data.year),
+      month: asInt(data.month),
 
       authors: normalizeAuthors(data.authors, __src),
 
@@ -85,6 +86,8 @@ function normalizePublications(items) {
         journal: asString(data?.links?.journal),
         pdf: asString(data?.links?.pdf),
         other: asString(data?.links?.other),
+        code: asString(data?.links?.code),
+        data: asString(data?.links?.data),
       },
 
       selected: asBool(data.selected, false),

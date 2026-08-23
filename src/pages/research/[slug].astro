@@ -1,0 +1,73 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ResearchRow from "../../components/ResearchRow.astro";
+import { getCollection, render } from "astro:content";
+import { withBase } from "../../lib/urls";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const allProjects = (await getCollection("projects"))
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+const currentIndex = allProjects.findIndex((entry) => entry.id === project.id);
+const nextProject = currentIndex >= 0 ? allProjects[(currentIndex + 1) % allProjects.length] : null;
+---
+
+<BaseLayout title={project.data.title} description={project.data.summary ?? project.data.short ?? "Research detail page"}>
+  <section class="section">
+    <div class="container">
+      <div class="detail-intro">
+        <div class="eyebrow">Research Detail</div>
+        <h1>{project.data.title}</h1>
+        {project.data.short && <p class="punchline hero-punch">{project.data.short}</p>}
+      </div>
+
+      <ResearchRow
+        index={0}
+        title={project.data.title}
+        short={project.data.short}
+        summary={project.data.summary}
+        media={project.data.media}
+        cover={project.data.cover}
+        video={project.data.video}
+        fit={project.data.fit}
+        ratio={project.data.ratio}
+        showText={false}
+      />
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="detail-grid">
+        <div class="detail-summary-card">
+          <div class="hero-card-label">Focus</div>
+          <p class="feature-copy">{project.data.summary ?? project.data.short}</p>
+          {project.data.tags?.length ? (
+            <div class="tag-row">
+              {project.data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div class="prose rich-content">
+          <Content />
+        </div>
+      </div>
+
+      <div class="section-actions">
+        <a class="btn btn-secondary" href={withBase("/research")}>Back to Research</a>
+        {nextProject && <a class="btn btn-ghost" href={withBase(`/research/${nextProject.id}`)}>Next Topic</a>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

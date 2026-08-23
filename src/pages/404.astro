@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../lib/urls";
+---
+
+<BaseLayout title="Page not found" description="The requested page could not be found.">
+  <section class="section">
+    <div class="container">
+      <div class="prose">
+        <div class="eyebrow">404 · Page not found</div>
+        <h1>This page dissipated.</h1>
+        <p class="punchline">The route never organized into a persistent system.</p>
+        <p class="lead">
+          The address may have changed, or the page may no longer exist. Return home or continue with the research overview.
+        </p>
+        <div class="button-row">
+          <a class="btn" href={withBase("/")}>Back to Home</a>
+          <a class="btn btn-ghost" href={withBase("/research")}>View Research</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

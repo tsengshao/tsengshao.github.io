@@ -1,8 +1,16 @@
 ---
-const { title = "Shao-Yu Tseng", description = "Research website" } = Astro.props;
 import "../styles/theme.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import { siteProfile } from "../data/site";
+import { withBase } from "../lib/urls";
+
+const {
+  title = siteProfile.name,
+  description = siteProfile.description,
+} = Astro.props;
+const pageTitle = title === siteProfile.name ? title : `${title} | ${siteProfile.name}`;
+const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
 ---
 
 <!doctype html>
@@ -10,13 +18,21 @@ import Footer from "../components/Footer.astro";
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
   </head>
 
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <Header />
-    <main>
+    <main id="main-content">
       <slot />
     </main>
     <Footer />

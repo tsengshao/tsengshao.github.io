@@ -1,261 +1,97 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import SectionHeader from "../components/SectionHeader.astro";
 import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PublicationEntry from "../components/PublicationEntry.astro";
+import { siteProfile } from "../data/site";
+import { splitPublications, type PublicationEntry as Publication } from "../lib/publications";
 
-/* ---------- helpers ---------- */
-const escapeHtml = (s = "") =>
-  String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+const publications = await getCollection("publications");
+const {
+  all,
+  preprints,
+  submitted,
+  inReview,
+  accepted,
+  published,
+  publishedRows,
+} = splitPublications(publications);
 
-function toInitials(given = "") {
-  // Shao-Yu -> S.-Y.
-  return String(given)
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => {
-      const hy = part.split("-");
-      if (hy.length > 1) return hy.map((x) => (x[0] ? x[0].toUpperCase() + "." : "")).join("-");
-      return part[0] ? part[0].toUpperCase() + "." : "";
-    })
-    .join(" ");
-}
-
-function formatNameAPA(fullName = "") {
-  const s = String(fullName).trim();
-  if (!s) return "";
-  if (s.includes(",")) {
-    const [lastRaw, givenRaw] = s.split(",").map((x) => x.trim());
-    return `${lastRaw}, ${toInitials(givenRaw)}`.trim();
-  }
-  const parts = s.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0];
-  const last = parts[parts.length - 1];
-  const given = parts.slice(0, -1).join(" ");
-  return `${last}, ${toInitials(given)}`.trim();
-}
-
-function joinAuthorsHtml(authorHtmlList = []) {
-  const n = authorHtmlList.length;
-  if (n === 0) return "";
-  if (n === 1) return authorHtmlList[0];
-  if (n === 2) return `${authorHtmlList[0]} &amp; ${authorHtmlList[1]}`;
-  return `${authorHtmlList.slice(0, -1).join(", ")}, &amp; ${authorHtmlList[n - 1]}`;
-}
-
-function renderAuthorsHtml(authors = []) {
-  const pieces = authors.map((a) => {
-    const name = escapeHtml(formatNameAPA(a.name));
-    const roles = a.roles ?? [];
-    const emph = a.emphasis ?? [];
-
-    const isMe = roles.includes("me") || emph.includes("bold");
-    const isStudent = roles.includes("student") || emph.includes("underline");
-    const isItalic = emph.includes("italic");
-
-    // order: italic inside underline inside bold (looks fine)
-    let html = name;
-    if (isItalic) html = `<em>${html}</em>`;
-    if (isStudent) html = `<span class="author author--student">${html}</span>`;
-    if (isMe) html = `<strong class="author author--me">${html}</strong>`;
-    return html;
-  });
-
-  return joinAuthorsHtml(pieces);
-}
-
-function doiToUrl(doi = "") {
-  const d = String(doi).trim();
-  if (!d) return "";
-  if (d.startsWith("http://") || d.startsWith("https://")) return d;
-  return `https://doi.org/${d}`;
-}
-
-function sortByTimeDescThenTitle(a, b) {
-  const ya = a.data.year ?? 0;
-  const yb = b.data.year ?? 0;
-  if (yb !== ya) return yb - ya;
-
-  // treat null / undefined / "" as "no-month"
-  const hasMa = a.data.month != null && a.data.month !== "";
-  const hasMb = b.data.month != null && b.data.month !== "";
-
-  // no-month first
-  if (hasMa !== hasMb) return hasMa ? 1 : -1;
-
-  // both have month (or both don't)
-  const ma = hasMa ? Number(a.data.month) : 0;
-  const mb = hasMb ? Number(b.data.month) : 0;
-
-  // month desc (12 -> 1)
-  if (mb !== ma) return mb - ma;
-
-  // fallback: title asc
-  return String(a.data.title).localeCompare(String(b.data.title));
-}
-
-function venueLineHtml(p) {
-  const v = p.data.venue?.trim() || "";
-  const vol = p.data.volume?.trim() || "";
-  const iss = p.data.issue?.trim() || "";
-  const pages = p.data.pages?.trim() || "";
-  if (!v && !vol && !iss && !pages) return "";
-
-  const venueHtml = v ? `<em>${escapeHtml(v)}</em>` : "";
-  const volHtml = vol ? `<em>${escapeHtml(vol)}</em>` : "";
-  const issHtml = iss ? `(${escapeHtml(iss)})` : "";
-  const pagesHtml = pages ? escapeHtml(pages) : "";
-
-  let out = "";
-  if (venueHtml) out += venueHtml;
-  if (venueHtml && (volHtml || issHtml || pagesHtml)) out += ", ";
-  if (volHtml) out += volHtml;
-  if (issHtml) out += issHtml;
-  if ((volHtml || issHtml) && pagesHtml) out += ", ";
-  if (pagesHtml) out += pagesHtml;
-  out += ".";
-  return out;
-}
-
-function citationHtml(p) {
-  const authors = renderAuthorsHtml(p.data.authors);
-  const year = p.data.year;
-  const title = escapeHtml(p.data.title);
-  const venue = venueLineHtml(p);
-
-  // DOI display as full url if present
-  const doiUrl = doiToUrl(p.data.links?.doi || "");
-  const doiHtml = doiUrl
-    ? ` <a href="${escapeHtml(doiUrl)}" target="_blank" rel="noreferrer">${escapeHtml(doiUrl)}</a>`
-    : "";
-
-  const venuePart = venue ? ` ${venue}` : "";
-  return `${authors} (${year}). <span class="pub-title">${title}</span>.${venuePart}${doiHtml}`;
-}
-
-/* Published needs year subtitles + reverse numbering */
-function buildPublishedRows(list) {
-  const rows = [];
-  let prevYear = null;
-
-  for (let i = 0; i < list.length; i++) {
-    const p = list[i];
-    const y = p.data.year;
-
-    if (y !== prevYear) {
-      rows.push({ kind: "year", year: y });
-      prevYear = y;
-    }
-
-    rows.push({
-      kind: "pub",
-      pub: p,
-      num: list.length - i, // newest gets biggest number
-    });
-  }
-
-  return rows;
-}
-
-/* ---------- data ---------- */
-const pubsAll = await getCollection("publications");
-
-const selected = pubsAll
-  .filter((p) => p.data.selected)
-  .sort(sortByTimeDescThenTitle);
-
-const submittedStatuses = new Set(["in_review", "submitted", "preprint"]);
-const submitted = pubsAll
-  .filter((p) => submittedStatuses.has(p.data.status))
-  .sort(sortByTimeDescThenTitle);
-
-const published = pubsAll
-  .filter((p) => p.data.status === "published")
-  .sort(sortByTimeDescThenTitle);
-
-const publishedRows = buildPublishedRows(published);
+const workingGroups: Array<{ title: string; description: string; items: Publication[] }> = [
+  {
+    title: "Preprints",
+    description: "Publicly available manuscripts that have not yet completed peer review.",
+    items: preprints,
+  },
+  {
+    title: "Under Review",
+    description: "Manuscripts currently in peer review.",
+    items: inReview,
+  },
+  {
+    title: "Submitted",
+    description: "Manuscripts submitted to a journal and awaiting review status.",
+    items: submitted,
+  },
+  {
+    title: "Accepted",
+    description: "Peer-reviewed work accepted for publication and awaiting final bibliographic details.",
+    items: accepted,
+  },
+].filter((group) => group.items.length > 0);
 ---
 
-<BaseLayout title="Publications">
+<BaseLayout title="Publications" description={`Publications by ${siteProfile.name} on convection, circulation, and storm-resolving models.`}>
   <section class="section">
     <div class="container">
       <div class="prose">
-        <SectionHeader
-          title="Publications"
-          subtitle="Selected and Submitted are shown as bullets for quick scanning; Published is grouped by year with reverse numbering."
-        />
+        <div class="eyebrow">Research Output</div>
+        <h1>Publications</h1>
+        <p class="lead">
+          Peer-reviewed articles and preprints on convection–circulation coupling, idealized cloud-resolving simulations,
+          and process-oriented evaluation of global storm-resolving models.
+        </p>
+        <p class="publication-overview">
+          {all.length} research {all.length === 1 ? "output" : "outputs"} · {published.length} published · {preprints.length} {preprints.length === 1 ? "preprint" : "preprints"}
+        </p>
       </div>
 
-      {/* Selected (bullets, no year headings) */}
-      {selected.length>0 && (
-      <div class="pub-block">
-        <h2 class="pub-block-title">Selected</h2>
-        <ul class="pub-list pub-list--bullets">
-          {selected.map((p) => (
-            <li class="pub-item pub-item--bullet">
-              <div class="pub-cite" set:html={citationHtml(p)} />
-              <div class="pub-actions">
-                {p.data.links?.pdf && <a class="pub-link" href={p.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
-                {p.data.links?.journal && <a class="pub-link" href={p.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
-                {p.data.links?.other && <a class="pub-link" href={p.data.links.other} target="_blank" rel="noreferrer">Other</a>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {workingGroups.map((group, index) => (
+        <>
+          {index > 0 && <hr class="pub-sep" />}
+          <section class="pub-block" aria-labelledby={`publication-group-${index}`}>
+            <h2 id={`publication-group-${index}`} class="pub-block-title">{group.title}</h2>
+            <p class="pub-block-description">{group.description}</p>
+            <ul class="pub-list pub-list--bullets">
+              {group.items.map((pub) => (
+                <li class="pub-item pub-item--bullet"><PublicationEntry pub={pub} /></li>
+              ))}
+            </ul>
+          </section>
+        </>
+      ))}
+
+      {published.length > 0 && (
+        <>
+          {workingGroups.length > 0 && <hr class="pub-sep" />}
+          <section class="pub-block" aria-labelledby="published-publications">
+            <h2 id="published-publications" class="pub-block-title">Published</h2>
+            <ol class="pub-list pub-list--revnum">
+              {publishedRows.map((row) =>
+                row.kind === "year" ? (
+                  <li class="pub-year">{row.year}</li>
+                ) : (
+                  <li class="pub-item pub-item--num">
+                    <span class="pub-num" aria-hidden="true">{row.num}.</span>
+                    <PublicationEntry pub={row.pub} />
+                  </li>
+                )
+              )}
+            </ol>
+          </section>
+        </>
       )}
 
-      {/* Submitted (bullets, no year headings) */}
-      {submitted.length>0 && (
-      <hr class="pub-sep" />
-
-      <div class="pub-block">
-        <h2 class="pub-block-title">Submitted</h2>
-        <ul class="pub-list pub-list--bullets">
-          {submitted.map((p) => (
-            <li class="pub-item pub-item--bullet">
-              <div class="pub-cite" set:html={citationHtml(p)} />
-              <div class="pub-actions">
-                {p.data.links?.pdf && <a class="pub-link" href={p.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
-                {p.data.links?.journal && <a class="pub-link" href={p.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
-                {p.data.links?.other && <a class="pub-link" href={p.data.links.other} target="_blank" rel="noreferrer">Other</a>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      )}
-
-      {/* Published (year headings + reverse numbering) */}
-      {submitted.length>0 && (
-      <hr class="pub-sep" />
-
-      <div class="pub-block">
-        <h2 class="pub-block-title">Published</h2>
-        <ol class="pub-list pub-list--revnum">
-          {publishedRows.map((r) =>
-            r.kind === "year" ? (
-              <li class="pub-year">{r.year}</li>
-            ) : (
-              <li class="pub-item pub-item--num">
-                <span class="pub-num">{r.num}.</span>
-                <div class="pub-cite" set:html={citationHtml(r.pub)} />
-                <div class="pub-actions">
-                  {r.pub.data.links?.pdf && <a class="pub-link" href={r.pub.data.links.pdf} target="_blank" rel="noreferrer">PDF</a>}
-                  {r.pub.data.links?.journal && <a class="pub-link" href={r.pub.data.links.journal} target="_blank" rel="noreferrer">Journal</a>}
-                  {r.pub.data.links?.other && <a class="pub-link" href={r.pub.data.links.other} target="_blank" rel="noreferrer">Other</a>}
-                </div>
-              </li>
-            )
-          )}
-        </ol>
-      </div>
-      )}
-
+      {all.length === 0 && <p class="lead">Publication records will be added here.</p>}
     </div>
   </section>
 </BaseLayout>

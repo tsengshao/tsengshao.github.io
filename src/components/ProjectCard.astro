@@ -1,5 +1,16 @@
 ---
-const { title, short, cover, video, tags, href } = Astro.props;
+import { withBase } from "../lib/urls";
+
+interface Props {
+  title: string;
+  short?: string;
+  cover?: string;
+  video?: string;
+  tags?: string[];
+  href?: string;
+}
+
+const { title, short, cover, video, tags, href }: Props = Astro.props;
 ---
 
 <div class="card" style="padding: 16px; display:flex; flex-direction:column; gap:12px;">
@@ -8,15 +19,15 @@ const { title, short, cover, video, tags, href } = Astro.props;
       <div style="font-size: 18px; font-weight: 900; line-height: 1.2;">{title}</div>
       <div style="margin-top: 8px; color: var(--muted); line-height: 1.55;">{short}</div>
     </div>
-    {href && <a class="btn" href={href}>Read more</a>}
+    {href && <a class="btn" href={withBase(href)}>Read more</a>}
   </div>
 
   {(video || cover) && (
     <div style="border-radius: var(--r-lg); overflow:hidden; border: 1px solid var(--border); background: rgba(0,0,0,0.18);">
       {video ? (
-        <video src={video} autoplay muted loop playsinline style="width:100%; display:block;"></video>
+        <video src={withBase(video)} autoplay controls muted loop playsinline style="width:100%; display:block;"></video>
       ) : (
-        <img src={cover} alt={title} style="width:100%; display:block;" loading="lazy" />
+        <img src={withBase(cover)} alt={title} style="width:100%; display:block;" loading="lazy" />
       )}
     </div>
   )}

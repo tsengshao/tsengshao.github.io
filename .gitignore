@@ -24,9 +24,8 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# large media files 
-**.mp4
-**.png
+# Large local research figure that is not used by the website.
+public/figures/FIG11_schematic.png
 
 # quarto 
 cv/.quarto/

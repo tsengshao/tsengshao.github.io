@@ -1,10 +1,24 @@
+---
+import { withBase } from "../lib/urls";
+
+const navigation = [
+  { href: "/research", label: "Research" },
+  { href: "/publications", label: "Publications" },
+  { href: "/cv", label: "CV" },
+];
+const currentPath = Astro.url.pathname.replace(/\/$/, "");
+---
+
 <header class="navbar" role="banner">
   <div class="container">
     <div class="navbar-inner">
-      <a class="brand" href="/" aria-label="Home">Shao-Yu Tseng</a>
+      <a class="brand" href={withBase("/")} aria-label="Shao-Yu Tseng — Home">Shao-Yu Tseng</a>
       <nav class="navlinks" aria-label="Primary navigation">
-        <a href="/publications">Publications</a>
-        <a href="/cv">CV</a>
+        {navigation.map((item) => {
+          const href = withBase(item.href);
+          const active = currentPath === href || currentPath.startsWith(`${href}/`);
+          return <a href={href} aria-current={active ? "page" : undefined}>{item.label}</a>;
+        })}
       </nav>
     </div>
   </div>

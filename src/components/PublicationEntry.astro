@@ -1,0 +1,78 @@
+---
+import type { PublicationEntry as Publication } from "../lib/publications";
+import { doiToUrl, formatNameAPA } from "../lib/publications";
+import { withBase } from "../lib/urls";
+
+interface Props {
+  pub: Publication;
+  showStatus?: boolean;
+}
+
+const { pub, showStatus = false } = Astro.props;
+const authors = pub.data.authors.map((author, index, list) => ({
+  name: formatNameAPA(author.name),
+  me: author.roles?.includes("me") || author.emphasis?.includes("bold"),
+  student: author.roles?.includes("student") || author.emphasis?.includes("underline"),
+  italic: author.roles?.includes("corresponding") || author.emphasis?.includes("italic"),
+  separator:
+    index === list.length - 1
+      ? ""
+      : index === list.length - 2
+        ? list.length === 2 ? " & " : ", & "
+        : ", ",
+}));
+
+const links = [
+  pub.data.links?.doi && { label: "DOI", href: doiToUrl(pub.data.links.doi) },
+  pub.data.links?.journal && { label: "Journal", href: pub.data.links.journal },
+  pub.data.links?.pdf && { label: "PDF", href: withBase(pub.data.links.pdf) },
+  pub.data.links?.code && { label: "Code", href: withBase(pub.data.links.code) },
+  pub.data.links?.data && { label: "Data", href: withBase(pub.data.links.data) },
+  pub.data.links?.other && { label: "Link", href: withBase(pub.data.links.other) },
+].filter(Boolean) as Array<{ label: string; href: string }>;
+
+const statusLabels = {
+  published: "Published",
+  accepted: "Accepted",
+  in_review: "Under review",
+  submitted: "Submitted",
+  preprint: "Preprint",
+} as const;
+
+const hasVenueDetails = Boolean(pub.data.volume || pub.data.issue || pub.data.pages);
+---
+
+<article class="pub-entry">
+  <div class="pub-cite">
+    <span class="pub-authors">
+      {authors.map((author) => (
+        <>
+          <span
+            class:list={[
+              "author",
+              { "author--me": author.me, "author--student": author.student, "author--italic": author.italic },
+            ]}
+          >{author.name}</span>{author.separator}
+        </>
+      ))}
+    </span>
+    <span> ({pub.data.year}). </span>
+    <span class="pub-title">{pub.data.title}</span><span>. </span>
+    {pub.data.venue && <em>{pub.data.venue}</em>}
+    {pub.data.venue && hasVenueDetails && <span>, </span>}
+    {pub.data.volume && <em>{pub.data.volume}</em>}
+    {pub.data.issue && <span>({pub.data.issue})</span>}
+    {(pub.data.volume || pub.data.issue) && pub.data.pages && <span>, </span>}
+    {pub.data.pages && <span>{pub.data.pages}</span>}
+    {(pub.data.venue || hasVenueDetails) && <span>.</span>}
+  </div>
+
+  {(showStatus || links.length > 0) && (
+    <div class="pub-actions">
+      {showStatus && <span class="pub-status">{statusLabels[pub.data.status]}</span>}
+      {links.map((link) => (
+        <a class="pub-link" href={link.href} target="_blank" rel="noreferrer noopener">{link.label}</a>
+      ))}
+    </div>
+  )}
+</article>

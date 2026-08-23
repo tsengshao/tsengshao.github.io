@@ -26,13 +26,22 @@ media:
   - kind: image
     src: "/figures/poster_tcseed.webp"
     alt: "Overview schematic of convective merging diagnosis"
-    label: "seed genesis"
+    label: "Convective-merger schematic"
 
   - kind: video
     src: "/videos/nicam_20150804.mp4"
     alt: "NICAM diurnal rainfall evolution"
-    label: "mp4 file"
+    label: "NICAM diurnal rainfall evolution"
 ---
 
-Quantifying convective processes in GSRMs
+### Research question
 
+How can physically interpretable diagnostics reveal why global storm-resolving models produce different patterns of convective organization and precipitation?
+
+### Approach
+
+I compare global storm-resolving models with large-eddy simulations and high-resolution observations, focusing on measurable processes such as convective merging and organization rather than relying only on bulk statistics.
+
+### Goal
+
+The aim is to trace model biases back to specific physical processes and turn those diagnoses into practical guidance for model development.

@@ -2,25 +2,31 @@
   "name": "shaoyu-site",
   "type": "module",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
+    "validate:content": "node scripts/validate-content.mjs",
     "export:cv": "node scripts/export-cv-yaml.mjs",
-    "cv:pdf": "quarto render cv/cv.qmd --to pdf && mv cv/cv.pdf public/",
-
+    "cv:pdf": "npm run export:cv && quarto render cv/cv.qmd --to pdf && mv cv/cv.pdf public/",
     "predev": "node scripts/gen-site-meta.mjs",
     "dev": "astro dev",
-
     "prebuild": "node scripts/gen-site-meta.mjs",
-    "build": "npm run export:cv && astro build",
-
+    "build": "npm run validate:content && npm run export:cv && astro build",
+    "check": "astro check",
+    "check:links": "node scripts/check-dist-links.mjs",
+    "verify": "npm run check && npm run build && npm run check:links",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.16.11"
+    "astro": "^7.2.4"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^24.13.3",
     "fast-glob": "^3.3.3",
-    "gray-matter": "^4.0.3",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.3.1",
+    "typescript": "^5.9.3"
   }
 }

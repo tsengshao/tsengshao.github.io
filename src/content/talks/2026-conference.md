@@ -24,7 +24,7 @@ authors:
 
 links:
   abstract: "https://jpgu.org/meeting/2026/session/A-AS09"
-  slides: "/talks/2026-jpgu-slides.pdf"
+  slides: ""
   poster: ""
   video: ""
   other: ""

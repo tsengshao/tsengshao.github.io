@@ -1,86 +1,62 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ResearchRow from "../components/ResearchRow.astro";
-import { getCollection } from "astro:content";
+import { siteProfile } from "../data/site";
 
 const projects = (await getCollection("projects"))
-  .sort((a,b) => (a.data.order ?? 999) - (b.data.order ?? 999))
-  .slice(0, 2);
+  .filter((project) => project.data.featured)
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
 
-const topic1 = projects[0];
-const topic2 = projects[1];
+const contactLinks = [
+  siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, external: false },
+  siteProfile.contacts.orcid && { label: "ORCID", href: siteProfile.contacts.orcid, external: true },
+  siteProfile.contacts.scholar && { label: "Google Scholar", href: siteProfile.contacts.scholar, external: true },
+].filter(Boolean) as Array<{ label: string; href: string; external: boolean }>;
 ---
 
-<BaseLayout title="Shao-Yu Tseng">
-  <!-- 1) Name + Intro (white) -->
+<BaseLayout title={siteProfile.name} description={siteProfile.description}>
   <section class="section">
     <div class="container">
       <div class="prose">
-        <h1>Shao-Yu Tseng</h1>
-        <p class="punchline">
-          Understanding how convection couples with circulation across scales — from idealized simulations to GSRMs.
-        </p>
+        <h1>{siteProfile.name}</h1>
+        <p class="punchline">{siteProfile.headline}</p>
+        <p class="lead">{siteProfile.intro}</p>
+        <p class="lead">{siteProfile.statement}</p>
         <p class="lead">
-          I focus on understanding convective processes across scales, from convective organization to the coupling between convective clusters and circulation.
-Using a cloud-resolving model (VVM), I investigate the physical mechanisms governing these processes, and apply quantitative, process-oriented diagnostics to evaluate global storm-resolving models against high-resolution observations, with the aim of identifying the physical origins of model biases and providing guidance for model improvement.
-While my current publications address different aspects of these processes, my long-term goal is to integrate insights from idealized experiments and quantitative model diagnostics into a unified physical framework.
-        </p>
-        <p class="lead">
-          I am currently a PhD student in the Department of Atmospheric Sciences at National Taiwan University, advised by Prof. Wei-Ting Chen, with Prof. Chien-Ming Wu as co-advisor.
+          I am a Ph.D. candidate in the Department of Atmospheric Sciences at National Taiwan University,
+          advised by Prof. Wei-Ting Chen and co-advised by Prof. Chien-Ming Wu.
         </p>
 
-        <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap; color: var(--muted); font-size: 14px;">
-          {/*<span>Department of Atmospheric Sciences, NTU</span>*}
-          {/*<span>•</span>*/}
-          <a href="#" title="add email later">Email</a>
-          <span>•</span>
-          <a href="#" target="_blank">ORCID</a>
-          <span>•</span>
-          <a href="#" target="_blank">Google Scholar</a>
+        <div class="profile-links" aria-label="Academic profiles and contact">
+          {contactLinks.map((link) => (
+            <a
+              href={link.href}
+              target={link.external ? "_blank" : undefined}
+              rel={link.external ? "noreferrer noopener" : undefined}
+            >{link.label}</a>
+          ))}
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 2) Topic 1 (alt) -->
-  <section class="section section--alt">
-    <div class="container">
-      {topic1 ? (
+  {projects.map((project, index) => (
+    <section class={`section ${index % 2 === 0 ? "section--alt" : ""}`}>
+      <div class="container">
         <ResearchRow
-          index={0}
-          title={topic1.data.title}
-          short={topic1.data.short}
-          summary={topic1.data.summary}
-          media={topic1.data.media}
-          cover={topic1.data.cover}
-          video={topic1.data.video}
-          fit={topic1.data.fit}
-          ratio={topic1.data.ratio}
+          index={index}
+          title={project.data.title}
+          short={project.data.short}
+          summary={project.data.summary}
+          media={project.data.media}
+          cover={project.data.cover}
+          video={project.data.video}
+          fit={project.data.fit}
+          ratio={project.data.ratio}
+          href={`/research/${project.id}`}
         />
-      ) : (
-        <p class="lead">Add your first project in <code>src/content/projects/</code>.</p>
-      )}
-    </div>
-  </section>
-
-  <!-- 3) Topic 2 (white) -->
-  <section class="section">
-    <div class="container">
-      {topic2 ? (
-        <ResearchRow
-          index={1}
-          title={topic2.data.title}
-          short={topic2.data.short}
-          summary={topic2.data.summary}
-          media={topic2.data.media}
-          cover={topic2.data.cover}
-          video={topic2.data.video}
-          fit={topic2.data.fit}
-          ratio={topic2.data.ratio}
-        />
-      ) : (
-        <p class="lead">Add your second project in <code>src/content/projects/</code>.</p>
-      )}
-    </div>
-  </section>
+      </div>
+    </section>
+  ))}
 </BaseLayout>
