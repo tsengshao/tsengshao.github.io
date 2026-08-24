@@ -6,6 +6,10 @@ public/downloads/Shao-Yu-Tseng-CV.pdf
 .astro/
 src/generated
 
+# local media sources and generated previews
+media/source/
+media/ready/
+
 # dependencies
 node_modules/
 
@@ -26,5 +30,3 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# Large local research figure that is not used by the website.
-public/figures/FIG11_schematic.png

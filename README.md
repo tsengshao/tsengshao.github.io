@@ -35,7 +35,9 @@ npm run verify
 | Talks | `src/content/talks/` |
 | Professional development | `src/content/professional-development/` |
 | Site identity and contact links | `src/data/site.ts` |
-| Public images, videos, and PDFs | `public/` |
+| Published web media | `public/media/` |
+| Local original and optimized media | `media/` |
+| Other public files and PDFs | `public/` |
 
 The schemas live in `src/content.config.ts`. A build fails when required fields or allowed status values are invalid.
 
@@ -132,6 +134,22 @@ Create a Markdown file in `src/content/projects/`. Set:
 
 Featured research topics are presented directly on the home page. The primary navigation links to that section instead of a separate Research overview page.
 
+## Optimize research media
+
+Original media and generated previews stay local, while approved web assets under `public/media/` are committed and deployed:
+
+```text
+media/source → npm run media:optimize → media/ready → manual review/copy → public/media
+```
+
+On macOS, install the required tools once with `brew install ffmpeg webp`. Place original figures, videos, or animations under the matching `media/source/` directory, then run:
+
+```sh
+npm run media:optimize
+```
+
+Review `media/ready/` and manually copy approved files into `public/media/`. Update the associated content path when an extension changes. The local source and ready directories are ignored by Git; the optimized files in `public/media/`, the optimizer, and `media/README.md` are committed. See `media/README.md` for formats, defaults, and optional quality settings.
+
 ## CV
 
 The CV is maintained in the same Markdown content collections as the website. The HTML render routes remain available for direct preview but are intentionally absent from site navigation and marked `noindex, nofollow`:
@@ -159,7 +177,7 @@ The command starts a temporary local Astro server and uses Playwright Chromium t
 
 ## GitHub Pages deployment
 
-`.github/workflows/deploy.yml` deploys pushes to `main` with the official Astro Pages action. The Astro config derives these values from GitHub automatically:
+`.github/workflows/deploy.yml` verifies, builds, and deploys pushes to `main` with GitHub Actions. The Astro config derives these values from GitHub automatically:
 
 - `site`: `https://<owner>.github.io`
 - `base`: `/<repository>` for a project site
@@ -178,6 +196,7 @@ In GitHub repository settings, select **Pages → Source → GitHub Actions**. E
 | `npm run dev` | Local development server |
 | `npm run check` | Astro and TypeScript diagnostics |
 | `npm run validate:content` | Content, DOI, protocol, and asset validation |
+| `npm run media:optimize` | Convert local source media into web-ready previews |
 | `npm run build` | Production build |
 | `npm run check:links` | Validate internal links in `dist/` |
 | `npm run verify` | Run all pre-deployment checks |

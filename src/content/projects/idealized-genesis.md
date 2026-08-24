@@ -11,7 +11,7 @@ fit: "contain"   # 或 "cover", contain
 
 media:
   - kind: image
-    src: "/figures/seed_FIG12_schematic.png"
+    src: "/media/figures/seed_FIG12_schematic.webp"
     alt: "Overview schematic of impact of aggregation vortex genesis diagnosis"
     label: "convection aggregation in vortex genesis"
     link: "https://doi.org/10.1029/2025JD045526"

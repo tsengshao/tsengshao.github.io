@@ -21,13 +21,13 @@ fit: "contain"
 media:
 
   - kind: image
-    src: "/figures/gsrm_fig5_scatter_merge_intensity.png"
+    src: "/media/figures/gsrm_fig5_scatter_merge_intensity.webp"
     alt: "diagnostics of merging process"
     label: "merging processes of DYAMOND models"
     link: "https://doi.org/10.2151/sola.2025-056"
 
   - kind: video
-    src: "/videos/gsrm_nicam_20150804.mp4"
+    src: "/media/videos/gsrm_nicam_20150804.mp4"
     alt: "NICAM diurnal rainfall evolution"
     label: "NICAM diurnal rainfall evolution"
 ---
