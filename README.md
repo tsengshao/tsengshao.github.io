@@ -8,10 +8,11 @@ Requirements:
 
 - Node.js 24 (`nvm use` reads `.nvmrc`)
 - npm
-- Quarto + a LaTeX distribution only when rebuilding `public/cv.pdf`
+- Playwright Chromium for build-time CV PDF generation
 
 ```sh
 npm ci
+npx playwright install chromium
 npm run dev
 ```
 
@@ -133,22 +134,28 @@ Featured research topics are presented directly on the home page. The primary na
 
 ## CV
 
-The HTML pages are the canonical CV:
+The CV is maintained in the same Markdown content collections as the website. The HTML render routes remain available for direct preview but are intentionally absent from site navigation and marked `noindex, nofollow`:
 
-- `/cv` is the concise Selected CV.
-- `/cv/full` is the complete CV.
+- `/cv` renders the concise Selected CV.
+- `/cv/full` renders the complete CV.
 
-Both versions read the same content collections, use unnumbered bullet lists, and provide a **Print / Save PDF** button. Print-specific CSS creates an A4 document, so routine CV updates require no separate PDF build. The Full CV includes all records; `cv.short: true` selects records for the concise version.
+The Full CV includes all records; `cv.short: true` selects records for the concise version. Both routes use the same `CVDocument.astro` component and A4 print CSS.
 
-The older Quarto/LaTeX pipeline is retained only for an optional standalone PDF:
+Generate both PDFs locally with:
 
 ```sh
 npm run cv:pdf
 ```
 
-This command exports current content first, renders `cv/cv.qmd`, and moves the result to `public/cv.pdf`. The website no longer links to that file by default.
+The command starts a temporary local Astro server and uses Playwright Chromium to produce:
 
-Do not hand-edit `src/generated/cv.generated.yml`; it remains an automatically generated input for the optional Quarto pipeline.
+- `artifacts/cv/Shao-Yu-Tseng-CV-selected.pdf`
+- `artifacts/cv/Shao-Yu-Tseng-CV-full.pdf`
+- `public/downloads/Shao-Yu-Tseng-CV.pdf`, a generated copy of the Selected CV used by the website
+
+`artifacts/` and the generated file under `public/downloads/` are ignored by Git. The homepage links only to the Selected PDF. The Full PDF is never copied into `public/` or `dist/`, so it is not deployed by GitHub Pages. Run `npm run cv:pdf` once before expecting the homepage download to work under `npm run dev`; production builds generate it automatically.
+
+`npm run build` and `npm run verify` regenerate both PDFs. On a fresh machine, install the browser once with `npx playwright install chromium`. GitHub Actions uses `npx playwright install --with-deps chromium` before building.
 
 ## GitHub Pages deployment
 
@@ -174,4 +181,4 @@ In GitHub repository settings, select **Pages → Source → GitHub Actions**. E
 | `npm run build` | Production build |
 | `npm run check:links` | Validate internal links in `dist/` |
 | `npm run verify` | Run all pre-deployment checks |
-| `npm run cv:pdf` | Optionally rebuild the legacy standalone CV PDF |
+| `npm run cv:pdf` | Generate local Selected and Full CV PDFs and refresh the public Selected copy |

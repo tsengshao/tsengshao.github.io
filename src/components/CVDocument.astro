@@ -3,7 +3,6 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PublicationEntry from "./PublicationEntry.astro";
 import { formatNameAPA, splitPublications } from "../lib/publications";
-import { withBase } from "../lib/urls";
 import { siteProfile } from "../data/site";
 
 interface Props {
@@ -81,14 +80,11 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
 <BaseLayout
   title={isShort ? "CV" : "Full CV"}
   description={`${isShort ? "Selected" : "Full"} curriculum vitae for ${siteProfile.name}.`}
+  noindex
 >
   <section class="section cv-page">
     <div class="container cv-shell">
       <div class="cv-toolbar" aria-label="CV controls">
-        <nav class="cv-view-switch" aria-label="CV version">
-          <a href={withBase("/cv")} aria-current={isShort ? "page" : undefined}>Selected CV</a>
-          <a href={withBase("/cv/full")} aria-current={!isShort ? "page" : undefined}>Full CV</a>
-        </nav>
         <button class="btn cv-print-button" type="button" data-print-cv>Print / Save PDF</button>
       </div>
 

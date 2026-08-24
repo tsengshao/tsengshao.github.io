@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ResearchRow from "../components/ResearchRow.astro";
 import { siteProfile } from "../data/site";
+import { withBase } from "../lib/urls";
 
 const projects = (await getCollection("projects"))
   .filter((project) => project.data.featured)
@@ -12,7 +13,8 @@ const contactLinks = [
   siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, external: false },
   siteProfile.contacts.orcid && { label: "ORCID", href: siteProfile.contacts.orcid, external: true },
   siteProfile.contacts.scholar && { label: "Google Scholar", href: siteProfile.contacts.scholar, external: true },
-].filter(Boolean) as Array<{ label: string; href: string; external: boolean }>;
+  { label: "Download CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), external: false, download: true },
+].filter(Boolean) as Array<{ label: string; href: string; external: boolean; download?: boolean }>;
 ---
 
 <BaseLayout title={siteProfile.name} description={siteProfile.description}>
@@ -33,6 +35,7 @@ const contactLinks = [
               href={link.href}
               target={link.external ? "_blank" : undefined}
               rel={link.external ? "noreferrer noopener" : undefined}
+              download={link.download ? "Shao-Yu-Tseng-CV.pdf" : undefined}
             >{link.label}</a>
           ))}
         </div>

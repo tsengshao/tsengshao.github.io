@@ -1,5 +1,7 @@
 # build output
 dist/
+artifacts/
+public/downloads/Shao-Yu-Tseng-CV.pdf
 # generated types
 .astro/
 src/generated
@@ -26,7 +28,3 @@ pnpm-debug.log*
 
 # Large local research figure that is not used by the website.
 public/figures/FIG11_schematic.png
-
-# quarto 
-cv/.quarto/
-cv/**/*.quarto_ipynb

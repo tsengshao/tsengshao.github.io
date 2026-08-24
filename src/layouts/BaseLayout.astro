@@ -8,6 +8,7 @@ import { withBase } from "../lib/urls";
 const {
   title = siteProfile.name,
   description = siteProfile.description,
+  noindex = false,
 } = Astro.props;
 const pageTitle = title === siteProfile.name ? title : `${title} | ${siteProfile.name}`;
 const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
@@ -20,6 +21,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href={withBase("/favicon.svg")} />
     {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
     <meta property="og:type" content="website" />

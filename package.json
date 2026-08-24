@@ -7,12 +7,11 @@
   },
   "scripts": {
     "validate:content": "node scripts/validate-content.mjs",
-    "export:cv": "node scripts/export-cv-yaml.mjs",
-    "cv:pdf": "npm run export:cv && quarto render cv/cv.qmd --to pdf && mv cv/cv.pdf public/",
+    "cv:pdf": "node scripts/render-cv-pdfs.mjs",
     "predev": "node scripts/gen-site-meta.mjs",
     "dev": "astro dev",
     "prebuild": "node scripts/gen-site-meta.mjs",
-    "build": "npm run validate:content && npm run export:cv && astro build",
+    "build": "npm run validate:content && npm run cv:pdf && astro build",
     "check": "astro check",
     "check:links": "node scripts/check-dist-links.mjs",
     "verify": "npm run check && npm run build && npm run check:links",
@@ -27,6 +26,7 @@
     "@types/node": "^24.13.3",
     "fast-glob": "^3.3.3",
     "js-yaml": "^4.3.1",
+    "playwright": "^1.62.1",
     "typescript": "^5.9.3"
   }
 }
