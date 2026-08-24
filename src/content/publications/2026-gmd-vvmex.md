@@ -1,5 +1,5 @@
 ---
-title: "VVMex v1.0: a modular GPU-capable refactoring of the Vector Vorticity cloud-resolving Model (VVM) with LES-based hierarchical validation and performance analysis"
+title: "VVMex v1.0: A modular GPU-capable refactoring of the Vector Vorticity cloud-resolving Model (VVM) with LES-based hierarchical validation and performance analysis"
 year: 2026
 
 authors:
@@ -11,9 +11,9 @@ authors:
     roles: []
 
 type: "journal"
-status: "preprint"
+status: "submitted"
 
-venue: "Geoscientific Model Development"
+venue: "EGUsphere"
 volume: ""
 issue: ""
 pages: ""
@@ -25,5 +25,7 @@ links:
   other: ""
 
 selected: false
+cv:
+  short: true
 tags: ["VVMex", "GPU"]
 ---

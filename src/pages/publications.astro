@@ -16,25 +16,21 @@ const {
   publishedRows,
 } = splitPublications(publications);
 
-const workingGroups: Array<{ title: string; description: string; items: Publication[] }> = [
+const workingGroups: Array<{ title: string; items: Publication[] }> = [
   {
     title: "Preprints",
-    description: "Publicly available manuscripts that have not yet completed peer review.",
     items: preprints,
   },
   {
     title: "Under Review",
-    description: "Manuscripts currently in peer review.",
     items: inReview,
   },
   {
     title: "Submitted",
-    description: "Manuscripts submitted to a journal and awaiting review status.",
     items: submitted,
   },
   {
     title: "Accepted",
-    description: "Peer-reviewed work accepted for publication and awaiting final bibliographic details.",
     items: accepted,
   },
 ].filter((group) => group.items.length > 0);
@@ -44,15 +40,7 @@ const workingGroups: Array<{ title: string; description: string; items: Publicat
   <section class="section">
     <div class="container">
       <div class="prose">
-        <div class="eyebrow">Research Output</div>
-        <h1>Publications</h1>
-        <p class="lead">
-          Peer-reviewed articles and preprints on convection–circulation coupling, idealized cloud-resolving simulations,
-          and process-oriented evaluation of global storm-resolving models.
-        </p>
-        <p class="publication-overview">
-          {all.length} research {all.length === 1 ? "output" : "outputs"} · {published.length} published · {preprints.length} {preprints.length === 1 ? "preprint" : "preprints"}
-        </p>
+        <h1 class="publications-title">Publications</h1>
       </div>
 
       {workingGroups.map((group, index) => (
@@ -60,7 +48,6 @@ const workingGroups: Array<{ title: string; description: string; items: Publicat
           {index > 0 && <hr class="pub-sep" />}
           <section class="pub-block" aria-labelledby={`publication-group-${index}`}>
             <h2 id={`publication-group-${index}`} class="pub-block-title">{group.title}</h2>
-            <p class="pub-block-description">{group.description}</p>
             <ul class="pub-list pub-list--bullets">
               {group.items.map((pub) => (
                 <li class="pub-item pub-item--bullet"><PublicationEntry pub={pub} /></li>

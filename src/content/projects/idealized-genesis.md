@@ -11,9 +11,9 @@ fit: "contain"   # 或 "cover", contain
 
 media:
   - kind: image
-    src: "/figures/poster_tcseed.webp"
-    alt: "Overview schematic of convective merging diagnosis"
-    label: "Moist vortex genesis"
+    src: "/figures/seed_FIG12_schematic.png"
+    alt: "Overview schematic of impact of aggregation vortex genesis diagnosis"
+    label: "convection aggregation in vortex genesis"
     link: "https://doi.org/10.1029/2025JD045526"
 
 ---

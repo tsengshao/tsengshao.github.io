@@ -43,6 +43,12 @@ const author = z.object({
   emphasis: z.array(z.enum(["bold", "underline", "italic"])).optional(),
 });
 
+const cvOptions = z
+  .object({
+    short: z.boolean().default(false),
+  })
+  .default({ short: false });
+
 const publications = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/publications" }),
   schema: z.object({
@@ -71,19 +77,39 @@ const publications = defineCollection({
       })
       .default({}),
     selected: z.boolean().default(false),
+    cv: cvOptions,
     tags: z.array(z.string()).default([]),
     url: z.url().optional(),
   }),
 });
 
-const positions = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/positions" }),
+const education = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/education" }),
   schema: z.object({
-    start: z.string(),
-    end: z.string(),
-    role: z.string(),
-    org: z.string(),
+    institution: z.string(),
+    department: z.string().optional(),
     location: z.string().optional(),
+    order: z.number().int().default(0),
+    degrees: z.array(
+      z.object({
+        start: z.string(),
+        end: z.string(),
+        degree: z.string(),
+        thesis: z.string().optional(),
+        advisor: z.string().optional(),
+      }),
+    ),
+  }),
+});
+
+const professionalDevelopment = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/professional-development" }),
+  schema: z.object({
+    year: z.number().int(),
+    title: z.string(),
+    org: z.string().optional(),
+    location: z.string().optional(),
+    cv: cvOptions,
   }),
 });
 
@@ -123,6 +149,7 @@ const talks = defineCollection({
       })
       .default({}),
     selected: z.boolean().default(false),
+    cv: cvOptions,
     tags: z.array(z.string()).default([]),
     url: z.url().optional(),
   }),
@@ -131,7 +158,8 @@ const talks = defineCollection({
 export const collections = {
   projects,
   publications,
-  positions,
+  education,
   honors,
+  professionalDevelopment,
   talks,
 };

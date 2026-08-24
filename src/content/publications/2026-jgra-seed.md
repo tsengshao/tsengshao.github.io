@@ -1,5 +1,5 @@
 ---
-title: "The Dependence of Moist Vortex Intensification on Convection‐Induced Moisture Distribution and Low‐Level Inflow: Insights for Tropical Cyclone Seed Genesis"
+title: "The dependence of moist vortex intensification on convection-induced moisture distribution and low-level inflow: Insights for tropical cyclone seed genesis"
 year: 2026
 
 authors:
@@ -18,7 +18,7 @@ status: "published"
 venue: "Journal of Geophysical Research: Atmospheres"
 volume: "131"
 issue: "15"
-pages: ""
+pages: "e2025JD045526"
 
 links:
   doi: "https://doi.org/10.1029/2025JD045526"
@@ -27,5 +27,7 @@ links:
   other: ""
 
 selected: false
+cv:
+  short: true
 tags: ["VVM", "seed genesis"]
 ---

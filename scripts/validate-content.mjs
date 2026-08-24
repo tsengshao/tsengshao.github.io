@@ -71,8 +71,6 @@ for (const { relativePath, data } of readCollection("talks")) {
   }
 }
 
-checkPublicPath("/cv.pdf", "public/cv.pdf", "CV download");
-
 if (errors.length > 0) {
   console.error(`[validate-content] ${errors.length} error(s):`);
   errors.forEach((error) => console.error(`- ${error}`));

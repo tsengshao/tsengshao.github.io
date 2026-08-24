@@ -22,7 +22,6 @@ const contactLinks = [
         <h1>{siteProfile.name}</h1>
         <p class="punchline">{siteProfile.headline}</p>
         <p class="lead">{siteProfile.intro}</p>
-        <p class="lead">{siteProfile.statement}</p>
         <p class="lead">
           I am a Ph.D. candidate in the Department of Atmospheric Sciences at National Taiwan University,
           advised by Prof. Wei-Ting Chen and co-advised by Prof. Chien-Ming Wu.
@@ -42,8 +41,14 @@ const contactLinks = [
   </section>
 
   {projects.map((project, index) => (
-    <section class={`section ${index % 2 === 0 ? "section--alt" : ""}`}>
+    <section id={index === 0 ? "topics" : undefined} class={`section section-anchor ${index % 2 === 0 ? "section--alt" : ""}`}>
       <div class="container">
+        {index === 0 && (
+          <header class="topic-heading">
+            <div class="eyebrow">Research</div>
+            <h2>Research topics</h2>
+          </header>
+        )}
         <ResearchRow
           index={index}
           title={project.data.title}
@@ -54,7 +59,6 @@ const contactLinks = [
           video={project.data.video}
           fit={project.data.fit}
           ratio={project.data.ratio}
-          href={`/research/${project.id}`}
         />
       </div>
     </section>

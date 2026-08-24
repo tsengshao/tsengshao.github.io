@@ -12,6 +12,7 @@ const OUT_FILE = path.join(OUT_DIR, "cv.generated.yml");
 
 function readMdFrontmatter(dirName) {
   const baseDir = path.join(CONTENT_ROOT, dirName);
+  if (!fs.existsSync(baseDir)) return [];
   const files = fg.sync(["**/*.md", "**/*.mdx"], { cwd: baseDir, dot: false });
 
   return files.map((rel) => {
@@ -91,6 +92,9 @@ function normalizePublications(items) {
       },
 
       selected: asBool(data.selected, false),
+      cv: {
+        short: asBool(data?.cv?.short, false),
+      },
       tags: asArray(data.tags).map(String),
       url: asString(data.url),
     };
@@ -99,6 +103,32 @@ function normalizePublications(items) {
   // Sort: year desc, then title asc
   pubs.sort((a, b) => (b.year - a.year) || a.title.localeCompare(b.title));
   return pubs;
+}
+
+function normalizeEducation(items) {
+  const education = items.map(({ __id, __src, data }) => {
+    if (!data?.institution || !Array.isArray(data?.degrees)) {
+      throw new Error(`Missing institution/degrees in education: ${__src}`);
+    }
+
+    return {
+      id: __id,
+      institution: String(data.institution).trim(),
+      department: asString(data.department),
+      location: asString(data.location),
+      order: asInt(data.order) ?? 0,
+      degrees: data.degrees.map((degree) => ({
+        start: asString(degree?.start) || "",
+        end: asString(degree?.end) || "",
+        degree: asString(degree?.degree) || "",
+        thesis: asString(degree?.thesis),
+        advisor: asString(degree?.advisor),
+      })),
+    };
+  });
+
+  education.sort((a, b) => a.order - b.order || a.institution.localeCompare(b.institution));
+  return education;
 }
 
 function normalizePositions(items) {
@@ -136,6 +166,27 @@ function normalizeHonors(items) {
 
   honors.sort((a, b) => (b.year - a.year) || a.title.localeCompare(b.title));
   return honors;
+}
+
+function normalizeProfessionalDevelopment(items) {
+  const entries = items.map(({ __id, __src, data }) => {
+    if (data?.year === undefined || data?.year === null || !data?.title) {
+      throw new Error(`Missing year/title in professional development: ${__src}`);
+    }
+    return {
+      id: __id,
+      year: asInt(data.year),
+      title: String(data.title).trim(),
+      org: asString(data.org),
+      location: asString(data.location),
+      cv: {
+        short: asBool(data?.cv?.short, false),
+      },
+    };
+  });
+
+  entries.sort((a, b) => (b.year - a.year) || a.title.localeCompare(b.title));
+  return entries;
 }
 
 function normalizeTalks(items) {
@@ -176,6 +227,9 @@ function normalizeTalks(items) {
       },
 
       selected: asBool(data.selected, false),
+      cv: {
+        short: asBool(data?.cv?.short, false),
+      },
       tags: asArray(data.tags).map(String),
       url: asString(data.url),
     };
@@ -188,14 +242,18 @@ function normalizeTalks(items) {
 
 function main() {
   const publicationsRaw = readMdFrontmatter("publications");
+  const educationRaw = readMdFrontmatter("education");
   const positionsRaw = readMdFrontmatter("positions");
   const honorsRaw = readMdFrontmatter("honors");
+  const professionalDevelopmentRaw = readMdFrontmatter("professional-development");
   const talksRaw = readMdFrontmatter("talks");
 
   const cv = {
     generated_at: new Date().toISOString(),
+    education: normalizeEducation(educationRaw),
     positions: normalizePositions(positionsRaw),
     honors_and_awards: normalizeHonors(honorsRaw),
+    professional_development: normalizeProfessionalDevelopment(professionalDevelopmentRaw),
     talks: normalizeTalks(talksRaw),
     publications: normalizePublications(publicationsRaw),
   };
@@ -204,8 +262,10 @@ function main() {
   fs.writeFileSync(OUT_FILE, yaml.dump(cv, { lineWidth: 120, noRefs: true }), "utf-8");
 
   console.log("[export-cv-yaml] wrote:", OUT_FILE);
+  console.log("[export-cv-yaml] education:", cv.education.length);
   console.log("[export-cv-yaml] positions:", cv.positions.length);
   console.log("[export-cv-yaml] honors:", cv.honors_and_awards.length);
+  console.log("[export-cv-yaml] professional development:", cv.professional_development.length);
   console.log("[export-cv-yaml] talks:", cv.talks.length);
   console.log("[export-cv-yaml] publications:", cv.publications.length);
 }

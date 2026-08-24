@@ -2,7 +2,7 @@
 import { withBase } from "../lib/urls";
 
 const navigation = [
-  { href: "/research", label: "Research" },
+  { href: "/#topics", label: "Research" },
   { href: "/publications", label: "Publications" },
   { href: "/cv", label: "CV" },
 ];
@@ -16,7 +16,8 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "");
       <nav class="navlinks" aria-label="Primary navigation">
         {navigation.map((item) => {
           const href = withBase(item.href);
-          const active = currentPath === href || currentPath.startsWith(`${href}/`);
+          const matchPath = href.split("#")[0].replace(/\/$/, "");
+          const active = !item.href.includes("#") && (currentPath === matchPath || currentPath.startsWith(`${matchPath}/`));
           return <a href={href} aria-current={active ? "page" : undefined}>{item.label}</a>;
         })}
       </nav>

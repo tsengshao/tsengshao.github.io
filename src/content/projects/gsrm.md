@@ -19,17 +19,15 @@ ratio: "16/9"
 fit: "contain"
 
 media:
-  - kind: video
-    src: "/videos/gsrm_loop.webm"
-    alt: "Convective merging evolution in GSRM simulation"
 
   - kind: image
-    src: "/figures/poster_tcseed.webp"
-    alt: "Overview schematic of convective merging diagnosis"
-    label: "Convective-merger schematic"
+    src: "/figures/gsrm_fig5_scatter_merge_intensity.png"
+    alt: "diagnostics of merging process"
+    label: "merging processes of DYAMOND models"
+    link: "https://doi.org/10.2151/sola.2025-056"
 
   - kind: video
-    src: "/videos/nicam_20150804.mp4"
+    src: "/videos/gsrm_nicam_20150804.mp4"
     alt: "NICAM diurnal rainfall evolution"
     label: "NICAM diurnal rainfall evolution"
 ---

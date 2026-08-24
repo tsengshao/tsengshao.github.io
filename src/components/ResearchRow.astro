@@ -51,13 +51,11 @@ const media: MediaItem[] = rawMedia.map((item) => ({
   poster: item.poster ? withBase(item.poster) : undefined,
   link: item.link ? withBase(item.link) : undefined,
 }));
-const labels = media.map((item) => item.label ?? item.alt ?? "");
 ---
 
 <div
   class={`research-row ${reverse ? "research-row--reverse" : ""} ${showText ? "" : "research-row--media-only"}`}
   data-research-carousel
-  data-labels={JSON.stringify(labels)}
 >
   {showText && (
     <div class="research-text" style={reverse ? "order:2" : "order:1"}>
@@ -80,41 +78,16 @@ const labels = media.map((item) => item.label ?? item.alt ?? "");
               role="group"
               aria-label={`${mediaIndex + 1} of ${media.length}: ${item.alt ?? item.label ?? title}`}
             >
-              {item.link ? (
-                <a
-                  class="rr-media-link"
-                  href={item.link}
-                  target={isExternalUrl(item.link) ? "_blank" : undefined}
-                  rel={isExternalUrl(item.link) ? "noreferrer noopener" : undefined}
-                  aria-label={`Open ${item.label ?? item.alt ?? title}`}
-                >
-                  {item.kind === "video" ? (
-                    <video
-                      src={item.src}
-                      poster={item.poster}
-                      aria-label={item.alt ?? title}
-                      autoplay={autoplay}
-                      controls
-                      muted
-                      loop
-                      playsinline
-                      preload="metadata"
-                    />
-                  ) : (
-                    <img src={item.src} alt={item.alt ?? title} loading="lazy" />
-                  )}
-                </a>
-              ) : item.kind === "video" ? (
+              {item.kind === "video" ? (
                 <video
                   src={item.src}
                   poster={item.poster}
                   aria-label={item.alt ?? title}
-                  autoplay={autoplay}
                   controls
                   muted
-                  loop
                   playsinline
                   preload="metadata"
+                  data-short-video-autoplay={autoplay ? "true" : "false"}
                 />
               ) : (
                 <img src={item.src} alt={item.alt ?? title} loading="lazy" />
@@ -129,7 +102,23 @@ const labels = media.map((item) => item.label ?? item.alt ?? "");
 
     {media.length > 0 && (
       <div class="rr-controls">
-        <div class="rr-badge" role="status" aria-live="polite"></div>
+        <div class="rr-badge" role="status" aria-live="polite">
+          {media.map((item, mediaIndex) => {
+            const caption = item.label ?? item.alt ?? `${mediaIndex + 1} of ${media.length}`;
+            return (
+              <span class="rr-caption" data-caption-index={String(mediaIndex)} hidden={mediaIndex !== 0}>
+                {item.link ? (
+                  <a
+                    class="rr-caption-link"
+                    href={item.link}
+                    target={isExternalUrl(item.link) ? "_blank" : undefined}
+                    rel={isExternalUrl(item.link) ? "noreferrer noopener" : undefined}
+                  >{caption}</a>
+                ) : caption}
+              </span>
+            );
+          })}
+        </div>
         {media.length > 1 && (
           <div class="rr-arrows" aria-label="Carousel controls">
             <button class="rr-arrow" type="button" data-dir="-1" aria-label={`Previous media for ${title}`}>
@@ -157,24 +146,48 @@ const labels = media.map((item) => item.label ?? item.alt ?? "");
         const previousButton = root.querySelector<HTMLButtonElement>('.rr-arrow[data-dir="-1"]');
         const nextButton = root.querySelector<HTMLButtonElement>('.rr-arrow[data-dir="1"]');
         const badge = root.querySelector<HTMLElement>(".rr-badge");
+        const captions = root.querySelectorAll<HTMLElement>(".rr-caption");
         if (!track || slides.length === 0) return;
 
-        const labels = JSON.parse(root.dataset.labels || "[]") as string[];
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const shortVideoThresholdSeconds = 30;
         let active = 0;
         let animationFrame = 0;
 
-        if (reducedMotion) {
-          root.querySelectorAll<HTMLVideoElement>("video").forEach((video) => video.pause());
-        }
+        const syncVideoPlayback = () => {
+          slides.forEach((slide, slideIndex) => {
+            slide.querySelectorAll<HTMLVideoElement>("video").forEach((video) => {
+              const shouldPlay =
+                slideIndex === active &&
+                video.dataset.shortLoop === "true" &&
+                video.dataset.shortVideoAutoplay === "true" &&
+                !reducedMotion;
+
+              if (shouldPlay) void video.play().catch(() => undefined);
+              else video.pause();
+            });
+          });
+        };
+
+        root.querySelectorAll<HTMLVideoElement>("video").forEach((video) => {
+          const configurePlayback = () => {
+            const shortLoop = Number.isFinite(video.duration) && video.duration < shortVideoThresholdSeconds;
+            video.controls = !shortLoop;
+            video.loop = shortLoop;
+            video.dataset.shortLoop = String(shortLoop);
+            syncVideoPlayback();
+          };
+
+          if (video.readyState >= HTMLMediaElement.HAVE_METADATA) configurePlayback();
+          else video.addEventListener("loadedmetadata", configurePlayback, { once: true });
+        });
 
         const update = () => {
           if (previousButton) previousButton.disabled = active === 0;
           if (nextButton) nextButton.disabled = active === slides.length - 1;
-          if (badge) {
-            badge.textContent = labels[active] || `${active + 1} of ${slides.length}`;
-            badge.style.visibility = "visible";
-          }
+          captions.forEach((caption, index) => { caption.hidden = index !== active; });
+          if (badge) badge.dataset.activeCaption = String(active);
+          syncVideoPlayback();
         };
 
         const scrollToIndex = (index: number) => {

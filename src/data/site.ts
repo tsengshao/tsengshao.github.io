@@ -6,7 +6,7 @@ export const siteProfile = {
   headline:
     "Convection, circulation, and model diagnostics across scales.",
   intro:
-    "I study how organized convection couples with circulation, from idealized cloud-resolving simulations to quantitative diagnostics for global storm-resolving models.",
+    "I study how organized convection couples with circulation, using idealized cloud-resolving simulations to isolate causal processes and interpretable diagnostics to explain where and why global storm-resolving models develop biases.",
   description:
     "Research website for Shao-Yu Tseng, focused on convection-circulation coupling, idealized simulations, and process-oriented diagnostics for global storm-resolving models.",
   contacts: {
@@ -14,8 +14,7 @@ export const siteProfile = {
     orcid: "https://orcid.org/0009-0007-0144-8017",
     scholar: "https://scholar.google.com/citations?user=2Q2ui7gAAAAJ&hl=zh-TW&oi=ao",
   },
-  statement:
-    "My work connects idealized physical reasoning with model evaluation: isolating causal pathways in convective systems, then using interpretable diagnostics to explain where and why large-scale models go wrong.",
+  cvUpdated: "August 2026",
   themes: [
     {
       title: "Convection-circulation coupling",

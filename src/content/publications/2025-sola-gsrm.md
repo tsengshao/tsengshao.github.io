@@ -1,5 +1,5 @@
 ---
-title: "Evaluating Precipitation Enhancement Associated with Convective Mergers in the Global Storm-Resolving Models of DYAMOND Summer Phase"
+title: "Evaluating precipitation enhancement associated with convective mergers in the global storm-resolving models of DYAMOND Summer Phase"
 year: 2025
 
 authors:
@@ -16,7 +16,7 @@ status: "published"
 venue: "Scientific Online Letters on the Atmosphere (SOLA)"
 volume: "21"
 issue: ""
-pages: "466-474"
+pages: "466–474"
 
 links:
   doi: "10.2151/sola.2025-056"
@@ -25,5 +25,7 @@ links:
   other: ""
 
 selected: false
+cv:
+  short: true
 tags: ["GSRM", "convective merging", "cloud dynamics"]
 ---

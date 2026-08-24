@@ -1,6 +1,6 @@
 # Shao-Yu Tseng — academic website
 
-Static academic website built with Astro. Research topics, publications, talks, positions, and honors are maintained as Markdown content and reused by the website and CV export pipeline.
+Static academic website built with Astro. Research topics, education, publications, talks, and other CV records are maintained as Markdown content and reused by the website and HTML CV.
 
 ## Local development
 
@@ -28,10 +28,11 @@ npm run verify
 | Content | Directory |
 |---|---|
 | Research topics/cards | `src/content/projects/` |
+| Education | `src/content/education/` |
 | Publications | `src/content/publications/` |
+| Honors and awards | `src/content/honors/` |
 | Talks | `src/content/talks/` |
-| Positions | `src/content/positions/` |
-| Honors | `src/content/honors/` |
+| Professional development | `src/content/professional-development/` |
 | Site identity and contact links | `src/data/site.ts` |
 | Public images, videos, and PDFs | `public/` |
 
@@ -69,6 +70,8 @@ links:
   other: ""
 
 selected: false
+cv:
+  short: true
 tags: ["topic"]
 ---
 ```
@@ -77,6 +80,46 @@ Allowed statuses are `preprint`, `submitted`, `in_review`, `accepted`, and `publ
 
 For a site-hosted PDF, place it under `public/papers/` and use a root-relative value such as `/papers/example.pdf`. `npm run validate:content` checks that the file exists. DOI may be stored as either a bare DOI or an `https://doi.org/...` URL.
 
+Set `cv.short: true` when the publication should appear in both the Selected and Full CV. Every publication appears in the Full CV automatically.
+
+## Add a presentation
+
+Create one Markdown file in `src/content/talks/`, using a filename such as `2027-conference-short-topic.md`:
+
+```yaml
+---
+date: "2027-12-15"
+year: 2027
+title: "Presentation title"
+event: "Conference or seminar name"
+kind: "oral"
+role: "presenter"
+location: "City, Country"
+
+authors:
+  - name: "Shao-Yu Tseng"
+    roles: ["me"]
+  - name: "Coauthor Name"
+    roles: []
+
+links:
+  abstract: ""
+  slides: ""
+  poster: ""
+  video: ""
+  other: ""
+
+selected: false
+cv:
+  short: true
+tags: ["topic"]
+---
+```
+
+Allowed `kind` values are `oral`, `poster`, `invited`, `seminar`, and `panel`. Allowed `role` values are `presenter`, `coauthor`, `organizer`, and `chair`. Add an optional `session` block with `id` and `name` when relevant.
+
+Place site-hosted slides or posters under `public/talks/` and use a root-relative path such as `/talks/2027-conference-slides.pdf`. Presentations are sorted by date automatically. The Full CV includes every presentation; the Selected CV includes records with `cv.short: true`.
+
 ## Add or update a research card
 
 Create a Markdown file in `src/content/projects/`. Set:
@@ -84,21 +127,28 @@ Create a Markdown file in `src/content/projects/`. Set:
 - `featured: true` to show it on the home page.
 - `order` to control home and Research page ordering.
 - `media` for images/videos in `public/`.
-- `link` on an individual media item when the figure should open a paper or project URL.
+- `link` on an individual media item when its caption should link to the corresponding paper or project URL.
 
-The Markdown body becomes the research detail page. It should normally include a research question, motivation, approach, and goal or key findings.
+Featured research topics are presented directly on the home page. The primary navigation links to that section instead of a separate Research overview page.
 
 ## CV
 
-Content records are exported to `src/generated/cv.generated.yml` during every site build. To regenerate the downloadable PDF:
+The HTML pages are the canonical CV:
+
+- `/cv` is the concise Selected CV.
+- `/cv/full` is the complete CV.
+
+Both versions read the same content collections, use unnumbered bullet lists, and provide a **Print / Save PDF** button. Print-specific CSS creates an A4 document, so routine CV updates require no separate PDF build. The Full CV includes all records; `cv.short: true` selects records for the concise version.
+
+The older Quarto/LaTeX pipeline is retained only for an optional standalone PDF:
 
 ```sh
 npm run cv:pdf
 ```
 
-This command exports current content first, renders `cv/cv.qmd`, and moves the result to `public/cv.pdf`. The PDF must be committed/deployed as a public asset; rebuild it whenever publication, talk, position, or honor content changes.
+This command exports current content first, renders `cv/cv.qmd`, and moves the result to `public/cv.pdf`. The website no longer links to that file by default.
 
-The CV layout is intentionally kept separate for a later design pass. Until then, do not hand-edit `src/generated/cv.generated.yml`.
+Do not hand-edit `src/generated/cv.generated.yml`; it remains an automatically generated input for the optional Quarto pipeline.
 
 ## GitHub Pages deployment
 
@@ -112,7 +162,7 @@ All internal links use `import.meta.env.BASE_URL`, so project sites and user sit
 
 For a custom domain, set `SITE_URL=https://example.com`, set `BASE_PATH=/`, and add `public/CNAME` containing the domain.
 
-In GitHub repository settings, select **Pages → Source → GitHub Actions**. Ensure every required public asset, including `public/cv.pdf`, has been committed; files that only exist locally cannot be deployed.
+In GitHub repository settings, select **Pages → Source → GitHub Actions**. Ensure every required public image and video has been committed; files that only exist locally cannot be deployed.
 
 ## Useful commands
 
@@ -124,4 +174,4 @@ In GitHub repository settings, select **Pages → Source → GitHub Actions**. E
 | `npm run build` | Production build |
 | `npm run check:links` | Validate internal links in `dist/` |
 | `npm run verify` | Run all pre-deployment checks |
-| `npm run cv:pdf` | Rebuild the downloadable CV PDF |
+| `npm run cv:pdf` | Optionally rebuild the legacy standalone CV PDF |

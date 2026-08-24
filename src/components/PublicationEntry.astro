@@ -6,9 +6,10 @@ import { withBase } from "../lib/urls";
 interface Props {
   pub: Publication;
   showStatus?: boolean;
+  compact?: boolean;
 }
 
-const { pub, showStatus = false } = Astro.props;
+const { pub, showStatus = false, compact = false } = Astro.props;
 const authors = pub.data.authors.map((author, index, list) => ({
   name: formatNameAPA(author.name),
   me: author.roles?.includes("me") || author.emphasis?.includes("bold"),
@@ -23,13 +24,14 @@ const authors = pub.data.authors.map((author, index, list) => ({
 }));
 
 const links = [
-  pub.data.links?.doi && { label: "DOI", href: doiToUrl(pub.data.links.doi) },
   pub.data.links?.journal && { label: "Journal", href: pub.data.links.journal },
   pub.data.links?.pdf && { label: "PDF", href: withBase(pub.data.links.pdf) },
   pub.data.links?.code && { label: "Code", href: withBase(pub.data.links.code) },
   pub.data.links?.data && { label: "Data", href: withBase(pub.data.links.data) },
   pub.data.links?.other && { label: "Link", href: withBase(pub.data.links.other) },
 ].filter(Boolean) as Array<{ label: string; href: string }>;
+const doiHref = doiToUrl(pub.data.links?.doi);
+const workType = pub.data.status === "preprint" ? "Preprint" : null;
 
 const statusLabels = {
   published: "Published",
@@ -57,7 +59,9 @@ const hasVenueDetails = Boolean(pub.data.volume || pub.data.issue || pub.data.pa
       ))}
     </span>
     <span> ({pub.data.year}). </span>
-    <span class="pub-title">{pub.data.title}</span><span>. </span>
+    <span class="pub-title">{pub.data.title}</span>
+    {workType && <span> [{workType}]</span>}
+    <span>. </span>
     {pub.data.venue && <em>{pub.data.venue}</em>}
     {pub.data.venue && hasVenueDetails && <span>, </span>}
     {pub.data.volume && <em>{pub.data.volume}</em>}
@@ -65,9 +69,10 @@ const hasVenueDetails = Boolean(pub.data.volume || pub.data.issue || pub.data.pa
     {(pub.data.volume || pub.data.issue) && pub.data.pages && <span>, </span>}
     {pub.data.pages && <span>{pub.data.pages}</span>}
     {(pub.data.venue || hasVenueDetails) && <span>.</span>}
+    {doiHref && <> <a class="pub-doi" href={doiHref} target="_blank" rel="noreferrer noopener">{doiHref}</a></>}
   </div>
 
-  {(showStatus || links.length > 0) && (
+  {!compact && (showStatus || links.length > 0) && (
     <div class="pub-actions">
       {showStatus && <span class="pub-status">{statusLabels[pub.data.status]}</span>}
       {links.map((link) => (

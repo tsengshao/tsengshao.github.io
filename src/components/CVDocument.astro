@@ -1,0 +1,237 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PublicationEntry from "./PublicationEntry.astro";
+import { formatNameAPA, splitPublications } from "../lib/publications";
+import { withBase } from "../lib/urls";
+import { siteProfile } from "../data/site";
+
+interface Props {
+  variant: "short" | "full";
+}
+
+const { variant } = Astro.props;
+const isShort = variant === "short";
+
+const [education, honors, professionalDevelopment, talks, publications] = await Promise.all([
+  getCollection("education"),
+  getCollection("honors"),
+  getCollection("professionalDevelopment"),
+  getCollection("talks"),
+  getCollection("publications"),
+]);
+
+education.sort((a, b) => a.data.order - b.data.order);
+honors.sort((a, b) => b.data.year - a.data.year || a.data.title.localeCompare(b.data.title));
+
+const visibleProfessionalDevelopment = professionalDevelopment
+  .filter((item) => !isShort || item.data.cv.short)
+  .sort((a, b) => b.data.year - a.data.year);
+const visibleTalks = talks
+  .filter((talk) => !isShort || talk.data.cv.short)
+  .sort((a, b) => b.data.date.localeCompare(a.data.date));
+const visiblePublications = publications.filter((publication) => !isShort || publication.data.cv.short);
+const { preprints, submitted, inReview, accepted, published } = splitPublications(visiblePublications);
+
+const publicationGroups = [
+  { title: "Preprints", items: preprints },
+  { title: "Submitted", items: submitted },
+  { title: "Under review", items: inReview },
+  { title: "Accepted", items: accepted },
+  { title: "Peer-reviewed", items: published },
+].filter((group) => group.items.length > 0);
+
+const presentationType = {
+  oral: "Oral presentation",
+  poster: "Poster presentation",
+  invited: "Invited presentation",
+  seminar: "Seminar",
+  panel: "Panel discussion",
+} as const;
+
+function formatDateRange(start: string, end: string) {
+  return `${start}\u2013${end}`;
+}
+
+function formatTalkDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
+}
+
+function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
+  return authors.map((author, index, list) => ({
+    name: formatNameAPA(author.name),
+    me: author.roles?.includes("me") || author.emphasis?.includes("bold"),
+    separator:
+      index === list.length - 1
+        ? ""
+        : index === list.length - 2
+          ? list.length === 2 ? " & " : ", & "
+          : ", ",
+  }));
+}
+---
+
+<BaseLayout
+  title={isShort ? "CV" : "Full CV"}
+  description={`${isShort ? "Selected" : "Full"} curriculum vitae for ${siteProfile.name}.`}
+>
+  <section class="section cv-page">
+    <div class="container cv-shell">
+      <div class="cv-toolbar" aria-label="CV controls">
+        <nav class="cv-view-switch" aria-label="CV version">
+          <a href={withBase("/cv")} aria-current={isShort ? "page" : undefined}>Selected CV</a>
+          <a href={withBase("/cv/full")} aria-current={!isShort ? "page" : undefined}>Full CV</a>
+        </nav>
+        <button class="btn cv-print-button" type="button" data-print-cv>Print / Save PDF</button>
+      </div>
+
+      <article class="cv-document" aria-label={`${isShort ? "Selected" : "Full"} curriculum vitae`}>
+        <header class="cv-document-header">
+          <div class="cv-document-meta">
+            <span>{siteProfile.name} ({siteProfile.contacts.email})</span>
+            <span>Last updated: {siteProfile.cvUpdated}</span>
+          </div>
+
+          <h1>{siteProfile.name}</h1>
+          <p class="cv-document-role">{siteProfile.role}</p>
+          <p class="cv-document-affiliation">{siteProfile.affiliation} · {siteProfile.location}</p>
+          <div class="cv-document-contact" aria-label="Contact and academic profiles">
+            <a href={`mailto:${siteProfile.contacts.email}`}>{siteProfile.contacts.email}</a>
+            <a href={siteProfile.contacts.orcid} target="_blank" rel="noreferrer noopener">ORCID</a>
+            <a href={siteProfile.contacts.scholar} target="_blank" rel="noreferrer noopener">Google Scholar</a>
+          </div>
+        </header>
+
+        <section class="cv-doc-section" aria-labelledby="cv-research-interests">
+          <h2 id="cv-research-interests">Research Interests</h2>
+          <ul class="cv-bullet-list cv-interest-list">
+            {siteProfile.themes.map((theme) => <li>{theme.title}</li>)}
+          </ul>
+        </section>
+
+        {education.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-education">
+            <h2 id="cv-education">Education</h2>
+            <div class="cv-institution-list">
+              {education.map((group) => (
+                <section class="cv-institution">
+                  <header class="cv-institution-header">
+                    <h3>{group.data.institution}</h3>
+                    <p>
+                      {group.data.department}
+                      {group.data.department && group.data.location ? " · " : ""}
+                      {group.data.location}
+                    </p>
+                  </header>
+                  <div class="cv-degree-list">
+                    {group.data.degrees.map((degree) => (
+                      <article class="cv-dated-row cv-degree-row">
+                        <div class="cv-date">{formatDateRange(degree.start, degree.end)}</div>
+                        <div>
+                          <h4>{degree.degree}</h4>
+                          {degree.thesis && <p class="cv-detail"><span>Thesis:</span> “{degree.thesis}”</p>}
+                          {degree.advisor && <p class="cv-detail"><span>Advisor:</span> {degree.advisor}</p>}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {honors.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-honors">
+            <h2 id="cv-honors">Honors & Awards</h2>
+            <ul class="cv-bullet-list">
+              {honors.map((honor) => (
+                <li>
+                  <span class="cv-item-year">{honor.data.year}</span> — {honor.data.title}
+                  {honor.data.org ? `, ${honor.data.org}` : ""}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {publicationGroups.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-publications">
+            <h2 id="cv-publications">Publications</h2>
+            {publicationGroups.map((group) => (
+              <section class="cv-doc-subsection">
+                <h3>{group.title}</h3>
+                <ul class="cv-bullet-list cv-publication-list">
+                  {group.items.map((publication) => (
+                    <li><PublicationEntry pub={publication} compact /></li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </section>
+        )}
+
+        {visibleTalks.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-presentations">
+            <h2 id="cv-presentations">{isShort ? "Selected Presentations" : "Presentations"}</h2>
+            <ul class="cv-bullet-list cv-presentation-list">
+              {visibleTalks.map((talk) => {
+                const authors = formatAuthors(talk.data.authors);
+                return (
+                  <li>
+                    <article class="cv-presentation-entry">
+                      <p>
+                        <span class="pub-authors">
+                          {authors.map((author) => (
+                            <>
+                              <span class:list={["author", { "author--me": author.me }]}>{author.name}</span>{author.separator}
+                            </>
+                          ))}
+                        </span>
+                        <span> ({formatTalkDate(talk.data.date)}). </span>
+                        <span>{talk.data.title}</span>
+                        <span> [{presentationType[talk.data.kind]}]. </span>
+                        <em>{talk.data.event}</em>
+                        {talk.data.location && <span>, {talk.data.location}</span>}
+                        <span>.</span>
+                      </p>
+                      {talk.data.links.abstract && (
+                        <a class="cv-inline-link" href={talk.data.links.abstract} target="_blank" rel="noreferrer noopener">Abstract</a>
+                      )}
+                    </article>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {visibleProfessionalDevelopment.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-professional-development">
+            <h2 id="cv-professional-development">Professional Development</h2>
+            <ul class="cv-bullet-list">
+              {visibleProfessionalDevelopment.map((item) => (
+                <li>
+                  <span class="cv-item-year">{item.data.year}</span> — {item.data.title}
+                  {item.data.org ? `, ${item.data.org}` : ""}
+                  {item.data.location ? ` · ${item.data.location}` : ""}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </article>
+    </div>
+  </section>
+
+  <script>
+    document.querySelector<HTMLButtonElement>("[data-print-cv]")?.addEventListener("click", () => window.print());
+  </script>
+</BaseLayout>

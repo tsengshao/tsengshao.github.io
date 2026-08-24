@@ -229,9 +229,37 @@ def heading(title):
 
 ```{python}
 #| output: asis
-heading("Positions")
+education = cv.get("education", []) or []
+if education:
+    heading("Education")
 
-for p in cv.get("positions", []) or []:
+for group in education:
+    institution = s(group.get("institution"))
+    department = s(group.get("department"))
+    location = s(group.get("location"))
+    context = " - ".join([x for x in [department, location] if x])
+
+    if is_pdf:
+        print("\\textbf{" + latex_escape(institution) + "}" + ((", " + latex_escape(context)) if context else ""))
+    else:
+        print("**" + institution + "**" + ((", " + context) if context else ""))
+
+    for degree in group.get("degrees", []) or []:
+        date = s(degree.get("start")) + "-" + s(degree.get("end"))
+        name = s(degree.get("degree"))
+        thesis = s(degree.get("thesis"))
+        advisor = s(degree.get("advisor"))
+        print("- " + latex_escape(date + ": " + name) if is_pdf else "- " + date + ": " + name)
+        if thesis:
+            print("  - " + ("Thesis: ``" + latex_escape(thesis) + "''" if is_pdf else "Thesis: “" + thesis + "”"))
+        if advisor:
+            print("  - " + ("Advisor: " + latex_escape(advisor) if is_pdf else "Advisor: " + advisor))
+
+positions = cv.get("positions", []) or []
+if positions:
+    heading("Positions")
+
+for p in positions:
     start = s(p.get("start"))
     end = s(p.get("end"))
     role = s(p.get("role"))
@@ -290,9 +318,11 @@ for pub in pubs:
 
 ```{python}
 #| output: asis
-heading("Honors and Awards")
+honors = cv.get("honors_and_awards", []) or []
+if honors:
+    heading("Honors and Awards")
 
-for h in cv.get("honors_and_awards", []) or []:
+for h in honors:
     year = s(h.get("year"))
     title = s(h.get("title"))
     org = s(h.get("org"))
@@ -313,6 +343,22 @@ for h in cv.get("honors_and_awards", []) or []:
         if org:
             line += " - " + org
         print("- " + line)
+```
+
+```{python}
+#| output: asis
+professional_development = cv.get("professional_development", []) or []
+if professional_development:
+    heading("Professional Development")
+
+for item in professional_development:
+    year = s(item.get("year"))
+    title = s(item.get("title"))
+    org = s(item.get("org"))
+    location = s(item.get("location"))
+    details = ", ".join([x for x in [org, location] if x])
+    line = year + ": " + title + ((" - " + details) if details else "")
+    print("- " + (latex_escape(line) if is_pdf else line))
 ```
 
 
