@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import HeroSchematic from "../components/HeroSchematic.astro";
 import ResearchRow from "../components/ResearchRow.astro";
 import { siteProfile } from "../data/site";
 import { withBase } from "../lib/urls";
@@ -11,23 +12,23 @@ const projects = (await getCollection("projects"))
 
 const contactLinks = [
   siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, external: false },
-  siteProfile.contacts.orcid && { label: "ORCID", href: siteProfile.contacts.orcid, external: true },
-  siteProfile.contacts.scholar && { label: "Google Scholar", href: siteProfile.contacts.scholar, external: true },
-  { label: "Download CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), external: false, download: true },
+  { label: "CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), external: false, download: true },
 ].filter(Boolean) as Array<{ label: string; href: string; external: boolean; download?: boolean }>;
 ---
 
 <BaseLayout title={siteProfile.name} description={siteProfile.description}>
-  <section class="section">
+  <section class="section home-hero">
     <div class="container">
-      <div class="prose">
+      <div class="home-hero-copy">
         <h1>{siteProfile.name}</h1>
         <p class="punchline">{siteProfile.headline}</p>
-        <p class="lead">{siteProfile.intro}</p>
-        <p class="lead">
-          I am a Ph.D. candidate in the Department of Atmospheric Sciences at National Taiwan University,
-          advised by Prof. Wei-Ting Chen and co-advised by Prof. Chien-Ming Wu.
-        </p>
+        <div class="home-hero-intro">
+          <p class="lead">{siteProfile.intro}</p>
+          <p class="lead">
+            I am a Ph.D. candidate in the Department of Atmospheric Sciences at National Taiwan University,
+            advised by Prof. Wei-Ting Chen and co-advised by Prof. Chien-Ming Wu.
+          </p>
+        </div>
 
         <div class="profile-links" aria-label="Academic profiles and contact">
           {contactLinks.map((link) => (
@@ -40,6 +41,7 @@ const contactLinks = [
           ))}
         </div>
       </div>
+      <HeroSchematic />
     </div>
   </section>
 
@@ -48,7 +50,6 @@ const contactLinks = [
       <div class="container">
         {index === 0 && (
           <header class="topic-heading">
-            <div class="eyebrow">Research</div>
             <h2>Research topics</h2>
           </header>
         )}

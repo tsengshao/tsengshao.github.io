@@ -34,14 +34,24 @@ const workingGroups: Array<{ title: string; items: Publication[] }> = [
     items: accepted,
   },
 ].filter((group) => group.items.length > 0);
+
+const profileLinks = [
+  siteProfile.contacts.scholar && { label: "Google Scholar", href: siteProfile.contacts.scholar },
+  siteProfile.contacts.orcid && { label: "ORCID", href: siteProfile.contacts.orcid },
+].filter(Boolean) as Array<{ label: string; href: string }>;
 ---
 
 <BaseLayout title="Publications" description={`Publications by ${siteProfile.name} on convection, circulation, and storm-resolving models.`}>
   <section class="section">
     <div class="container">
-      <div class="prose">
+      <header class="publications-header">
         <h1 class="publications-title">Publications</h1>
-      </div>
+        <nav class="publication-profile-links" aria-label="Publication profiles">
+          {profileLinks.map((link) => (
+            <a href={link.href} target="_blank" rel="noreferrer noopener">{link.label}</a>
+          ))}
+        </nav>
+      </header>
 
       {workingGroups.map((group, index) => (
         <>

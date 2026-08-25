@@ -10,7 +10,7 @@
   --w: 1100px;
   --padX: 20px;
   --sectionY: clamp(44px, 6vw, 92px);
-  --gap: 22px;
+  --gap: clamp(34px, 5vw, 68px);
   --prose: 70ch;
   --r: 14px;
 
@@ -72,8 +72,20 @@ button:focus-visible{
   background: var(--alt);
 }
 .section-anchor{ scroll-margin-top: 72px; }
-.topic-heading{ margin-bottom: clamp(24px, 4vw, 42px); }
-.topic-heading h2{ margin-top: 6px; }
+.topic-heading{
+  margin-bottom: clamp(34px, 5vw, 56px);
+  text-align: center;
+}
+.topic-heading h2{ margin: 0; }
+.topic-heading::after{
+  content: "";
+  display: block;
+  width: 42px;
+  height: 1px;
+  margin: 18px auto 0;
+  background: var(--accent);
+  opacity: .42;
+}
 
 /* ===== Typography ===== */
 h1{
@@ -102,7 +114,7 @@ p{
 .punchline{
   margin-top: 10px;
   color: var(--text);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.15px;
   line-height: 1.55;
   font-size: clamp(16px, 1.35vw, 19px);
@@ -144,7 +156,7 @@ code{
 }
 
 .brand{
-  font-weight: 900;
+  font-weight: 750;
   letter-spacing: -0.2px;
   color: var(--text);
 }
@@ -157,7 +169,7 @@ code{
 }
 .navlinks a{
   color: var(--text);
-  font-weight: 650;
+  font-weight: 600;
   font-size: 14px;
 }
 .navlinks a:hover{
@@ -177,7 +189,65 @@ code{
   gap: 10px 18px;
   margin-top: 20px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 650;
+}
+
+/* ===== Homepage introduction ===== */
+.home-hero{
+  overflow: hidden;
+  padding-top: clamp(32px, 3vw, 44px);
+  padding-bottom: clamp(22px, 2vw, 30px);
+}
+
+.home-hero > .container{
+  max-width: 1240px;
+}
+
+.home-hero-copy{
+  max-width: 1060px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home-hero-copy h1{
+  font-size: clamp(38px, 4vw, 52px);
+  font-weight: 760;
+}
+
+.home-hero-copy > .punchline{
+  margin-top: 12px;
+  font-size: clamp(17px, 1.45vw, 20px);
+}
+
+.home-hero-intro{
+  max-width: 94ch;
+  margin: 18px auto 0;
+  text-align: center;
+}
+
+.home-hero-intro .lead{
+  margin-top: 0;
+}
+
+.home-hero-intro .lead + .lead{
+  margin-top: 8px;
+}
+
+.home-hero .profile-links{
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.hero-schematic{
+  width: min(1040px, 100%);
+  margin: 20px auto 0;
+  color: var(--text);
+}
+
+.hero-schematic img{
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* ===== Minimal button (optional) ===== */
@@ -217,7 +287,7 @@ code{
 .eyebrow{
   color: var(--accent);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 750;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -421,13 +491,13 @@ code{
 /* ===== Research row: text + media side-by-side ===== */
 .research-row{
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr; /* text slightly wider */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--gap);
-  align-items: start;
+  align-items: center;
 }
 
 .research-row--reverse{
-  grid-template-columns: 0.95fr 1.05fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .research-row--media-only{
@@ -441,9 +511,9 @@ code{
 
 .kicker{
   color: var(--accent);
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.1px;
+  font-weight: 750;
+  font-size: 12px;
+  letter-spacing: .07em;
   text-transform: uppercase;
   margin-bottom: 10px;
 }
@@ -453,6 +523,8 @@ code{
   color: var(--muted);
   line-height: 1.7;
   font-size: var(--p);
+  hyphens: none;
+  text-align: left;
 }
 
 .research-more{
@@ -507,79 +579,61 @@ code{
   gap: 10px;
 }
 
-/* ===== ResearchRow controls: centered badge + fixed-right arrows ===== */
+/* ===== ResearchRow controls ===== */
 
 .rr-controls{
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr) 66px;
   align-items: center;
-  justify-content: flex-end;     /* arrows 靠右 */
   gap: 12px;
-  min-height: 33px;             /* 穩定高度，避免跳動 */
-  padding-top: 6px;      /* 跟 badge 的 top 對應 */
+  min-height: 33px;
+  padding-top: 6px;
   padding-bottom: 6px;
 }
 
 /* arrows 永遠在最右邊，且寬度固定，方便 badge 避開 */
 .rr-arrows{
   display: inline-flex;
+  grid-column: 3;
+  justify-self: end;
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
   white-space: nowrap;
 }
 
-/* badge：以 rr-controls 寬度左右置中，但保留右側空間給 arrows */
 .rr-badge{
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-
-  background: transparent;
-  padding: 0 10px;
+  grid-column: 2;
+  min-width: 0;
+  padding: 0;
   margin: 0;
-
-  font-size: 18px;              /* 你截圖的感覺接近這個大小 */
-  font-weight: 500;
-  line-height: 1.15;
-  opacity: 0.9;
-
-  /* ✅ 重點：不要吃掉箭頭區 */
-  max-width: calc(100% - 120px); /* 120px ≈ 2顆按鈕+gap 的保守預留 */
-  white-space: normal;           /* 手機可換行 */
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
   overflow-wrap: anywhere;
-
-  pointer-events: auto;
 }
 
 .rr-caption-link{
   color: var(--accent);
+  text-decoration: none;
+}
+
+.rr-caption-link:hover{
   text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+  text-underline-offset: 3px;
 }
 
-/* 小螢幕：箭頭區相對占比變大，所以 badge 再縮一點避免擠到 */
-@media (max-width: 520px){
-  .rr-badge{
-    font-size: 15px;
-    max-width: calc(100% - 104px);
-    padding: 0 8px;
-  }
-}
-
-/* 讓按鈕回到正常流排版（不要 absolute） */
 .rr-controls .rr-arrow{
-  position: static;
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  /*border: 1px solid rgba(15,23,42,0.12);*/
   border: none;
-  background: #efeff1;
-  color: rgba(0,0,0,.55);
-  font-size: 25px;
+  background: rgba(15,23,42,.06);
+  color: rgba(11,18,32,.58);
+  font-size: 23px;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
@@ -636,6 +690,7 @@ code{
   .research-row,
   .research-row--reverse{
     grid-template-columns: 1fr;
+    gap: 30px;
   }
 
   /* always text first then media-block */
@@ -655,6 +710,23 @@ code{
 @media (max-width: 520px){
   :root{ --padX: 18px; }
   .navlinks a{ font-size: 13px; }
+  .home-hero{
+    padding-top: 36px;
+    padding-bottom: 20px;
+  }
+  .home-hero-copy h1{ font-size: 36px; }
+  .home-hero-intro{ margin-top: 18px; }
+  .home-hero .profile-links{
+    gap: 9px 16px;
+    margin-top: 18px;
+  }
+  .hero-schematic{
+    width: calc(100% + 40px);
+    margin-top: 22px;
+    margin-left: -20px;
+  }
+  .topic-heading{ margin-bottom: 34px; }
+  .rr-badge{ font-size: 12.5px; }
   .cv-toolbar{ align-items: stretch; }
   .cv-document{
     margin: 0 calc(-1 * var(--padX));
@@ -673,6 +745,20 @@ code{
   font-size: var(--h2);
   line-height: 1.2;
   letter-spacing: -0.35px;
+}
+
+.publications-header{
+  text-align: center;
+}
+
+.publication-profile-links{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* blocks */

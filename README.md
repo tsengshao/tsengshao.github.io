@@ -41,6 +41,17 @@ npm run verify
 
 The schemas live in `src/content.config.ts`. A build fails when required fields or allowed status values are invalid.
 
+## Site icons and Safari
+
+The standard browser-tab icon is `public/favicon.svg`. `src/layouts/BaseLayout.astro` references it with `rel="icon"`, so replacing that file updates the favicon on every route; Safari may require a cache clear or relaunch before showing a changed icon.
+
+Apple and Safari use separate optional assets for other surfaces:
+
+- `public/apple-touch-icon.png` is the 180×180 square PNG used when a visitor adds the site to an iPhone or iPad Home Screen. It uses the same SY artwork as the favicon and is referenced from `BaseLayout.astro` with `rel="apple-touch-icon"`.
+- `apple-touch-icon-precomposed.png` is a legacy variant intended to prevent old iOS versions from adding gloss or other effects. Modern sites normally do not need both files.
+- A classic Safari pinned tab can use a separate single-color `safari-pinned-tab.svg` referenced with `rel="mask-icon"` and a theme color. This is independent of the regular full-color favicon.
+- Safari's tab-overview page preview is generated from the rendered page rather than from a dedicated Astro image asset. Open Graph images are for shared-link previews, not the Safari tab snapshot.
+
 ## Add or update a publication
 
 Create one Markdown file in `src/content/publications/`, using a stable descriptive filename such as `2026-journal-short-title.md`:
@@ -131,8 +142,11 @@ Create a Markdown file in `src/content/projects/`. Set:
 - `order` to control home and Research page ordering.
 - `media` for images/videos in `public/`.
 - `link` on an individual media item when its caption should link to the corresponding paper or project URL.
+- `ratio` to match the dominant media shape; using an overly wide ratio can make plots and portrait-oriented videos appear unnecessarily small.
 
 Featured research topics are presented directly on the home page. The primary navigation links to that section instead of a separate Research overview page.
+
+The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row intentionally contains only Email and the Selected CV download; Google Scholar and ORCID are centered directly below the Publications heading.
 
 ## Optimize research media
 

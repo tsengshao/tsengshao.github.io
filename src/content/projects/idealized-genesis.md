@@ -16,6 +16,10 @@ media:
     label: "convection aggregation in vortex genesis"
     link: "https://doi.org/10.1029/2025JD045526"
 
+  - kind: image
+    src: "/media/figures/seed_FIG11_scatter.webp"
+    label: "convection aggregation in vortex genesis"
+    link: "https://doi.org/10.1029/2025JD045526"
 ---
 
 ### Research question

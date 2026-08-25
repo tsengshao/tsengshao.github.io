@@ -15,7 +15,7 @@ keywords:
   - Quantitative model evaluation
   - Convective processes
 
-ratio: "16/9"
+ratio: "4/3"
 fit: "contain"
 
 media:
