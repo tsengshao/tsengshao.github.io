@@ -119,6 +119,7 @@ const honors = defineCollection({
     year: z.number().int(),
     title: z.string(),
     org: z.string().optional(),
+    detail: z.string().optional(),
   }),
 });
 

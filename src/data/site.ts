@@ -11,6 +11,7 @@ export const siteProfile = {
     "Research website for Shao-Yu Tseng, focused on convection-circulation coupling, idealized simulations, and process-oriented diagnostics for global storm-resolving models.",
   contacts: {
     email: "d12229003@ntu.edu.tw",
+    website: "https://tsengshao.github.io",
     orcid: "https://orcid.org/0009-0007-0144-8017",
     scholar: "https://scholar.google.com/citations?user=2Q2ui7gAAAAJ&hl=zh-TW&oi=ao",
   },

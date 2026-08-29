@@ -31,7 +31,7 @@ npm run verify
 | Research topics/cards | `src/content/projects/` |
 | Education | `src/content/education/` |
 | Publications | `src/content/publications/` |
-| Honors and awards | `src/content/honors/` |
+| Awards and support | `src/content/honors/` |
 | Talks | `src/content/talks/` |
 | Professional development | `src/content/professional-development/` |
 | Site identity and contact links | `src/data/site.ts` |

@@ -52,6 +52,10 @@ function formatDateRange(start: string, end: string) {
   return `${start}\u2013${end}`;
 }
 
+function formatEducationField(department = "") {
+  return department.replace(/^Department of\s+/i, "");
+}
+
 function formatTalkDate(value: string) {
   const parsed = new Date(`${value}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -91,17 +95,15 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
       <article class="cv-document" aria-label={`${isShort ? "Selected" : "Full"} curriculum vitae`}>
         <header class="cv-document-header">
           <div class="cv-document-meta">
-            <span>{siteProfile.name} ({siteProfile.contacts.email})</span>
             <span>Last updated: {siteProfile.cvUpdated}</span>
           </div>
 
           <h1>{siteProfile.name}</h1>
           <p class="cv-document-role">{siteProfile.role}</p>
           <p class="cv-document-affiliation">{siteProfile.affiliation} · {siteProfile.location}</p>
-          <div class="cv-document-contact" aria-label="Contact and academic profiles">
+          <div class="cv-document-contact" aria-label="Contact links">
             <a href={`mailto:${siteProfile.contacts.email}`}>{siteProfile.contacts.email}</a>
-            <a href={siteProfile.contacts.orcid} target="_blank" rel="noreferrer noopener">ORCID</a>
-            <a href={siteProfile.contacts.scholar} target="_blank" rel="noreferrer noopener">Google Scholar</a>
+            <a href={siteProfile.contacts.website} target="_blank" rel="noreferrer noopener">tsengshao.github.io</a>
           </div>
         </header>
 
@@ -119,12 +121,15 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
               {education.map((group) => (
                 <section class="cv-institution">
                   <header class="cv-institution-header">
-                    <h3>{group.data.institution}</h3>
-                    <p>
-                      {group.data.department}
-                      {group.data.department && group.data.location ? " · " : ""}
-                      {group.data.location}
-                    </p>
+                    <h3>
+                      <span class="cv-education-field">{formatEducationField(group.data.department)}</span>
+                      <span class="cv-education-secondary">
+                        {group.data.department && group.data.institution ? " · " : ""}
+                        {group.data.institution}
+                        {(group.data.department || group.data.institution) && group.data.location ? " · " : ""}
+                        {group.data.location}
+                      </span>
+                    </h3>
                   </header>
                   <div class="cv-degree-list">
                     {group.data.degrees.map((degree) => (
@@ -132,8 +137,8 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
                         <div class="cv-date">{formatDateRange(degree.start, degree.end)}</div>
                         <div>
                           <h4>{degree.degree}</h4>
-                          {degree.thesis && <p class="cv-detail"><span>Thesis:</span> “{degree.thesis}”</p>}
-                          {degree.advisor && <p class="cv-detail"><span>Advisor:</span> {degree.advisor}</p>}
+                          {degree.thesis && <p class="cv-detail">Thesis — “{degree.thesis}”</p>}
+                          {degree.advisor && <p class="cv-detail">Advisor — {degree.advisor}</p>}
                         </div>
                       </article>
                     ))}
@@ -145,13 +150,14 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
         )}
 
         {honors.length > 0 && (
-          <section class="cv-doc-section" aria-labelledby="cv-honors">
-            <h2 id="cv-honors">Honors & Awards</h2>
+          <section class="cv-doc-section" aria-labelledby="cv-awards-support">
+            <h2 id="cv-awards-support">Awards & Support</h2>
             <ul class="cv-bullet-list">
-              {honors.map((honor) => (
+              {honors.map((award) => (
                 <li>
-                  <span class="cv-item-year">{honor.data.year}</span> — {honor.data.title}
-                  {honor.data.org ? `, ${honor.data.org}` : ""}
+                  <span class="cv-item-year">{award.data.year}</span> — {award.data.title}
+                  {award.data.org ? `, ${award.data.org}` : ""}
+                  {award.data.detail && <span class="cv-award-detail">{award.data.detail}</span>}
                 </li>
               ))}
             </ul>
