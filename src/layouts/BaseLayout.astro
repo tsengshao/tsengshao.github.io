@@ -39,5 +39,50 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null
       <slot />
     </main>
     <Footer />
+
+    <script>
+      const navbar = document.querySelector<HTMLElement>(".navbar");
+      const updateNavbarState = () => {
+        navbar?.toggleAttribute("data-scrolled", window.scrollY > 12);
+      };
+
+      updateNavbarState();
+      window.addEventListener("scroll", updateNavbarState, { passive: true });
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!reducedMotion) {
+        const revealTargets = document.querySelectorAll<HTMLElement>(
+          ".home-hero-copy > *, .hero-schematic, .topic-heading, .research-row, .publications-header, .pub-block",
+        );
+
+        revealTargets.forEach((element, index) => {
+          element.classList.add("reveal-item");
+          if (element.closest(".home-hero")) {
+            element.style.setProperty("--reveal-delay", `${Math.min(index, 4) * 70}ms`);
+          }
+        });
+
+        document.documentElement.classList.add("motion-ready");
+
+        if ("IntersectionObserver" in window) {
+          const revealObserver = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("reveal-item--visible");
+                revealObserver.unobserve(entry.target);
+              });
+            },
+            { rootMargin: "0px 0px -8%", threshold: 0.08 },
+          );
+
+          revealTargets.forEach((element) => revealObserver.observe(element));
+        } else {
+          revealTargets.forEach((element) => element.classList.add("reveal-item--visible"));
+        }
+
+      }
+    </script>
   </body>
 </html>

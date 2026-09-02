@@ -6,6 +6,7 @@ const navigation = [
   { href: "/publications", label: "Publications" },
 ];
 const currentPath = Astro.url.pathname.replace(/\/$/, "");
+const homePath = withBase("/").replace(/\/$/, "");
 ---
 
 <header class="navbar" role="banner">
@@ -16,7 +17,9 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "");
         {navigation.map((item) => {
           const href = withBase(item.href);
           const matchPath = href.split("#")[0].replace(/\/$/, "");
-          const active = !item.href.includes("#") && (currentPath === matchPath || currentPath.startsWith(`${matchPath}/`));
+          const active = item.href.includes("#")
+            ? currentPath === homePath
+            : currentPath === matchPath || currentPath.startsWith(`${matchPath}/`);
           return <a href={href} aria-current={active ? "page" : undefined}>{item.label}</a>;
         })}
       </nav>

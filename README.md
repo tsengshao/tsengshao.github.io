@@ -156,13 +156,15 @@ Original media and generated previews stay local, while approved web assets unde
 media/source → npm run media:optimize → media/ready → manual review/copy → public/media
 ```
 
-On macOS, install the required tools once with `brew install ffmpeg webp`. Place original figures, videos, or animations under the matching `media/source/` directory, then run:
+On macOS, install the required tools once with `brew install ffmpeg webp`. The project-local `sharp` dependency is installed by `npm ci`. Place original figures, videos, or animations under the matching `media/source/` directory, then run:
 
 ```sh
 npm run media:optimize
 ```
 
-Review `media/ready/` and manually copy approved files into `public/media/`. Update the associated content path when an extension changes. The local source and ready directories are ignored by Git; the optimized files in `public/media/`, the optimizer, and `media/README.md` are committed. See `media/README.md` for formats, defaults, and optional quality settings.
+For figures, the optimizer checks whether the outer edge has a sufficiently uniform background color. When it does, only matching pixels connected to the image boundary are made transparent, so enclosed white plot areas are retained; already-transparent and non-uniform figures are left intact. The command reports its decision for every figure.
+
+Review `media/ready/` and manually copy approved files into `public/media/`. Update the associated content path when an extension changes. The local source and ready directories are ignored by Git; the optimized files in `public/media/`, the optimizer, and `media/README.md` are committed. See `media/README.md` for formats, background-detection controls, and optional quality settings.
 
 ## CV
 

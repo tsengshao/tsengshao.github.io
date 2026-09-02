@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import sharp from "sharp";
 
 const root = process.cwd();
 const sourceRoot = path.join(root, "media", "source");
@@ -13,9 +15,15 @@ const motionExtensions = new Set([".gif", ".mov", ".mp4", ".m4v", ".avi", ".webm
 const imageMaxWidth = Number(process.env.MEDIA_IMAGE_MAX_WIDTH || 3200);
 const imageQuality = Number(process.env.MEDIA_IMAGE_QUALITY || 88);
 const imageLosslessMaxBytes = Number(process.env.MEDIA_IMAGE_LOSSLESS_MAX_BYTES || 1024 ** 2);
+const removeImageBackground = !["0", "false", "off"].includes(
+  String(process.env.MEDIA_REMOVE_BACKGROUND || "true").toLowerCase(),
+);
+const backgroundTolerance = Number(process.env.MEDIA_BACKGROUND_TOLERANCE || 24);
+const backgroundEdgeCoverage = Number(process.env.MEDIA_BACKGROUND_EDGE_COVERAGE || 0.9);
 const videoMaxWidth = Number(process.env.MEDIA_VIDEO_MAX_WIDTH || 1920);
 const videoMaxHeight = Number(process.env.MEDIA_VIDEO_MAX_HEIGHT || 1080);
 const videoCrf = Number(process.env.MEDIA_VIDEO_CRF || 24);
+const skipMotion = ["1", "true", "on"].includes(String(process.env.MEDIA_SKIP_MOTION || "false").toLowerCase());
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -60,24 +68,137 @@ async function collectFiles(directory) {
   return files.sort();
 }
 
-function imageWidth(inputPath) {
-  const output = run(
-    "ffprobe",
-    [
-      "-v", "error",
-      "-select_streams", "v:0",
-      "-show_entries", "stream=width",
-      "-of", "default=noprint_wrappers=1:nokey=1",
-      inputPath,
-    ],
-    { capture: true },
-  );
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? Math.round((sorted[middle - 1] + sorted[middle]) / 2)
+    : sorted[middle];
+}
 
-  const width = Number(output);
-  if (!Number.isFinite(width) || width <= 0) {
-    throw new Error(`Unable to read image width: ${path.relative(root, inputPath)}`);
+function colorDistance(data, offset, background) {
+  const red = data[offset] - background[0];
+  const green = data[offset + 1] - background[1];
+  const blue = data[offset + 2] - background[2];
+  return Math.sqrt(red * red + green * green + blue * blue);
+}
+
+function removeFlatEdgeBackground(data, width, height) {
+  const pixelCount = width * height;
+  const cornerSize = Math.max(2, Math.min(24, Math.round(Math.min(width, height) * 0.01)));
+  const cornerPixels = [];
+  let transparentCornerPixels = 0;
+
+  const sampleCorner = (startX, startY) => {
+    for (let y = startY; y < startY + cornerSize; y += 1) {
+      for (let x = startX; x < startX + cornerSize; x += 1) {
+        const offset = (y * width + x) * 4;
+        if (data[offset + 3] <= 16) {
+          transparentCornerPixels += 1;
+          continue;
+        }
+        cornerPixels.push([data[offset], data[offset + 1], data[offset + 2]]);
+      }
+    }
+  };
+
+  sampleCorner(0, 0);
+  sampleCorner(width - cornerSize, 0);
+  sampleCorner(0, height - cornerSize);
+  sampleCorner(width - cornerSize, height - cornerSize);
+
+  const totalCornerPixels = cornerSize * cornerSize * 4;
+  if (transparentCornerPixels / totalCornerPixels >= 0.6) {
+    return { status: "already-transparent" };
   }
-  return width;
+  if (cornerPixels.length < totalCornerPixels * 0.6) {
+    return { status: "not-uniform" };
+  }
+
+  const background = [0, 1, 2].map((channel) => median(cornerPixels.map((pixel) => pixel[channel])));
+  const edgeStep = Math.max(1, Math.floor((width * 2 + height * 2) / 8000));
+  let matchingEdgePixels = 0;
+  let sampledEdgePixels = 0;
+
+  const sampleEdgePixel = (x, y) => {
+    const offset = (y * width + x) * 4;
+    sampledEdgePixels += 1;
+    if (data[offset + 3] <= 16 || colorDistance(data, offset, background) <= backgroundTolerance) {
+      matchingEdgePixels += 1;
+    }
+  };
+
+  for (let x = 0; x < width; x += edgeStep) {
+    sampleEdgePixel(x, 0);
+    sampleEdgePixel(x, height - 1);
+  }
+  for (let y = edgeStep; y < height - 1; y += edgeStep) {
+    sampleEdgePixel(0, y);
+    sampleEdgePixel(width - 1, y);
+  }
+
+  const edgeCoverage = matchingEdgePixels / sampledEdgePixels;
+  if (edgeCoverage < backgroundEdgeCoverage) {
+    return { status: "not-uniform", background, edgeCoverage };
+  }
+
+  const queue = new Int32Array(pixelCount);
+  const visited = new Uint8Array(pixelCount);
+  let queueStart = 0;
+  let queueEnd = 0;
+
+  const canRemove = (pixelIndex) => {
+    const offset = pixelIndex * 4;
+    return data[offset + 3] <= 16 || colorDistance(data, offset, background) <= backgroundTolerance;
+  };
+
+  const enqueue = (pixelIndex) => {
+    if (visited[pixelIndex] || !canRemove(pixelIndex)) return;
+    visited[pixelIndex] = 1;
+    queue[queueEnd] = pixelIndex;
+    queueEnd += 1;
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    enqueue(x);
+    enqueue((height - 1) * width + x);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    enqueue(y * width);
+    enqueue(y * width + width - 1);
+  }
+
+  const solidRemovalDistance = backgroundTolerance * 0.35;
+  let changedPixels = 0;
+
+  while (queueStart < queueEnd) {
+    const pixelIndex = queue[queueStart];
+    queueStart += 1;
+    const offset = pixelIndex * 4;
+    const originalAlpha = data[offset + 3];
+    const distance = colorDistance(data, offset, background);
+    const alphaScale = distance <= solidRemovalDistance
+      ? 0
+      : (distance - solidRemovalDistance) / (backgroundTolerance - solidRemovalDistance);
+    const nextAlpha = Math.round(originalAlpha * Math.max(0, Math.min(1, alphaScale)));
+    if (nextAlpha < originalAlpha) {
+      data[offset + 3] = nextAlpha;
+      changedPixels += 1;
+    }
+
+    const x = pixelIndex % width;
+    if (x > 0) enqueue(pixelIndex - 1);
+    if (x < width - 1) enqueue(pixelIndex + 1);
+    if (pixelIndex >= width) enqueue(pixelIndex - width);
+    if (pixelIndex < pixelCount - width) enqueue(pixelIndex + width);
+  }
+
+  return {
+    status: changedPixels > 0 ? "removed" : "unchanged",
+    background,
+    edgeCoverage,
+    changedPixels,
+  };
 }
 
 function replaceExtension(relativePath, extension) {
@@ -98,17 +219,56 @@ async function optimizeImage(inputPath, relativePath, outputs) {
   await ensureUniqueOutput(outputPath, outputs);
 
   const sourceStats = await fs.stat(inputPath);
-  const useLossless = path.extname(inputPath).toLowerCase() === ".png"
-    && sourceStats.size <= imageLosslessMaxBytes;
-  const args = useLossless
-    ? ["-quiet", "-mt", "-lossless", "-z", "9"]
-    : ["-quiet", "-mt", "-m", "6", "-q", String(imageQuality)];
-  if (imageWidth(inputPath) > imageMaxWidth) {
-    args.push("-resize", String(imageMaxWidth), "0");
+  const metadata = await sharp(inputPath).metadata();
+  if (!metadata.width || !metadata.height) {
+    throw new Error(`Unable to read image dimensions: ${path.relative(root, inputPath)}`);
   }
-  args.push(inputPath, "-o", outputPath);
-  run("cwebp", args);
-  return outputPath;
+
+  const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "shaoyu-media-"));
+  let conversionInput = inputPath;
+  let conversionWidth = metadata.width;
+  let background = { status: removeImageBackground ? "not-uniform" : "disabled" };
+
+  try {
+    if (removeImageBackground) {
+      const pipeline = sharp(inputPath).rotate();
+      if (metadata.width > imageMaxWidth) {
+        pipeline.resize({ width: imageMaxWidth, withoutEnlargement: true });
+      }
+      const { data, info } = await pipeline
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      background = removeFlatEdgeBackground(data, info.width, info.height);
+      if (background.status === "removed") {
+        conversionInput = path.join(temporaryDirectory, "transparent.png");
+        conversionWidth = info.width;
+        await sharp(data, {
+          raw: {
+            width: info.width,
+            height: info.height,
+            channels: 4,
+          },
+        }).png({ compressionLevel: 9 }).toFile(conversionInput);
+      }
+    }
+
+    const useLossless = path.extname(inputPath).toLowerCase() === ".png"
+      && sourceStats.size <= imageLosslessMaxBytes;
+    const args = useLossless
+      ? ["-quiet", "-mt", "-lossless", "-z", "9"]
+      : ["-quiet", "-mt", "-m", "6", "-q", String(imageQuality)];
+    args.push("-alpha_q", "100");
+    if (conversionWidth > imageMaxWidth) {
+      args.push("-resize", String(imageMaxWidth), "0");
+    }
+    args.push(conversionInput, "-o", outputPath);
+    run("cwebp", args);
+    return { outputPath, background };
+  } finally {
+    await fs.rm(temporaryDirectory, { recursive: true, force: true });
+  }
 }
 
 async function optimizeMotion(inputPath, relativePath, category, outputs) {
@@ -132,7 +292,7 @@ async function optimizeMotion(inputPath, relativePath, category, outputs) {
     "-c:a", "aac", "-b:a", "128k",
     outputPath,
   ]);
-  return outputPath;
+  return { outputPath };
 }
 
 function humanSize(bytes) {
@@ -142,8 +302,14 @@ function humanSize(bytes) {
 }
 
 async function main() {
-  if (![imageMaxWidth, imageQuality, imageLosslessMaxBytes, videoMaxWidth, videoMaxHeight, videoCrf].every(Number.isFinite)) {
+  if (![imageMaxWidth, imageQuality, imageLosslessMaxBytes, backgroundTolerance, backgroundEdgeCoverage, videoMaxWidth, videoMaxHeight, videoCrf].every(Number.isFinite)) {
     throw new Error("Media optimization settings must be numeric.");
+  }
+  if (backgroundTolerance <= 0 || backgroundTolerance > 100) {
+    throw new Error("MEDIA_BACKGROUND_TOLERANCE must be greater than 0 and at most 100.");
+  }
+  if (backgroundEdgeCoverage < 0 || backgroundEdgeCoverage > 1) {
+    throw new Error("MEDIA_BACKGROUND_EDGE_COVERAGE must be between 0 and 1.");
   }
 
   await fs.rm(readyRoot, { recursive: true, force: true });
@@ -167,7 +333,7 @@ async function main() {
     completed.push(await optimizeImage(inputPath, relativePath, outputs));
   }
 
-  for (const category of ["videos", "animations"]) {
+  for (const category of skipMotion ? [] : ["videos", "animations"]) {
     const categoryRoot = path.join(sourceRoot, category);
     for (const inputPath of await collectFiles(categoryRoot)) {
       const extension = path.extname(inputPath).toLowerCase();
@@ -186,10 +352,23 @@ async function main() {
   }
 
   console.log("[media] optimized files:");
-  for (const outputPath of completed) {
+  for (const item of completed) {
+    const { outputPath, background } = item;
     const stats = await fs.stat(outputPath);
-    console.log(`- ${path.relative(root, outputPath)} (${humanSize(stats.size)})`);
+    let backgroundSummary = "";
+    if (background?.status === "removed") {
+      const color = background.background.map((channel) => channel.toString(16).padStart(2, "0")).join("");
+      backgroundSummary = `; removed edge background #${color}`;
+    } else if (background?.status === "already-transparent") {
+      backgroundSummary = "; source background already transparent";
+    } else if (background?.status === "not-uniform") {
+      backgroundSummary = "; preserved non-uniform edge background";
+    } else if (background?.status === "disabled") {
+      backgroundSummary = "; background removal disabled";
+    }
+    console.log(`- ${path.relative(root, outputPath)} (${humanSize(stats.size)}${backgroundSummary})`);
   }
+  if (skipMotion) console.log("[media] motion optimization skipped by MEDIA_SKIP_MOTION");
   console.log("[media] review media/ready, then manually copy approved files to public/media");
 }
 
