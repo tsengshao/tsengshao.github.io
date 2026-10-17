@@ -3,6 +3,23 @@ import type { Preset } from "./vvm/camera-navigation";
 
 type Controller = { hide: () => void; dispose: () => void; load: () => Promise<void> };
 
+function youtubeController(card: HTMLElement): Controller {
+  const frame = card.querySelector<HTMLIFrameElement>("[data-youtube]")!;
+  const stop = () => {
+    frame.removeAttribute("src");
+    card.dataset.state = "idle";
+  };
+  return {
+    load: async () => {
+      if (card.hidden || frame.hasAttribute("src")) return;
+      frame.src = frame.dataset.src!;
+      card.dataset.state = "embedded";
+    },
+    hide: stop,
+    dispose: stop,
+  };
+}
+
 function sceneController(card: HTMLElement): Controller {
   const host = card.querySelector<HTMLElement>("[data-canvas]")!;
   const status = card.querySelector<HTMLElement>("[data-load-status]")!;
@@ -142,7 +159,7 @@ export function initializeVisualizationGalleries() {
   document.querySelectorAll<HTMLElement>("[data-visualization-gallery]:not([data-ready])").forEach((gallery) => {
     gallery.dataset.ready = "true";
     const cards = [...gallery.querySelectorAll<HTMLElement>("[data-visualization]")];
-    const controllers = cards.map(sceneController);
+    const controllers = cards.map((card) => card.dataset.kind === "youtube" ? youtubeController(card) : sceneController(card));
     let active = 0;
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) if (entry.isIntersecting && !cards[active].hidden) {
@@ -161,10 +178,12 @@ export function initializeVisualizationGalleries() {
         control.disabled = control.dataset.experiment === "next" ? active === cards.length - 1 : active === 0;
       });
       void controllers[active].load();
-      cards[active].querySelector<HTMLButtonElement>(`[data-experiment="${button.dataset.experiment}"]`)?.focus();
+      const preferred = cards[active].querySelector<HTMLButtonElement>(`[data-experiment="${button.dataset.experiment}"]`);
+      (preferred && !preferred.disabled ? preferred : cards[active].querySelector<HTMLButtonElement>("[data-experiment]:not(:disabled)"))?.focus();
     }));
     const cancelMotion = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) controllers.forEach((controller) => controller.hide());
+      else void controllers[active].load();
     });
     cancelMotion.observe(gallery);
     // Preserve back/forward-cache pages; release GPU resources when leaving for good.

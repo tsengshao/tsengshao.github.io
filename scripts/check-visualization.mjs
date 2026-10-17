@@ -14,15 +14,22 @@ try {
     let mobileRendererURL;
     page.on("pageerror", (error) => failures.push(error.message));
     page.on("requestfailed", (request) => {
-      // Research videos can cancel metadata requests when scrolled out of view.
-      if (request.failure()?.errorText === "net::ERR_ABORTED" && request.resourceType() === "media") return;
+      // Offscreen research media and unloaded YouTube players cancel pending requests.
+      if (request.failure()?.errorText === "net::ERR_ABORTED" && (request.resourceType() === "media" || request.url().startsWith("https://www.youtube-nocookie.com/embed/"))) return;
       failures.push(`${request.url()}: ${request.failure()?.errorText}`);
     });
     page.on("request", (request) => {
       if (request.url().includes(".vvmweb")) packages.push(request.url());
       if (/local-renderer\.[^/]+\.js/.test(request.url())) mobileRendererURL = request.url();
     });
+    const youtubeRequests = [];
+    await page.route("https://www.youtube-nocookie.com/embed/**", (route) => {
+      youtubeRequests.push(route.request().url());
+      return route.fulfill({ contentType: "text/html", body: "<!doctype html><title>YouTube test player</title><body style='margin:0;background:#000;color:white'>YouTube test player</body>" });
+    });
     await page.goto(origin);
+    assert.equal(youtubeRequests.length, 0, "Hidden YouTube entries must not contact YouTube");
+    assert.equal(await page.locator("[data-youtube]").getAttribute("src"), null);
     assert.equal(packages.length, 0, "3D package must not load above the gallery");
     const card = page.locator("[data-visualization]").first();
     const home = async () => {
@@ -86,9 +93,12 @@ try {
       return getComputedStyle(section).backgroundColor !== getComputedStyle(section.previousElementSibling).backgroundColor;
     }), true, "Gallery should have a different section background from Research");
     assert.equal(await card.locator("figcaption").textContent(), "TaiwanVVMex Simulation");
-    assert.equal(await page.locator("#visualization-title").textContent(), "Gallery");
-    assert.equal(await page.locator(".visualization-heading p").count(), 0);
-    assert.equal(await card.locator("[data-experiment]").count(), 0, "One entry should have no carousel arrows");
+    assert.equal(await page.locator("#visualization-title").textContent(), "Visualization");
+    assert.equal(await page.locator(".visualization-heading p").textContent(), "I enjoy creating scientific visualizations.");
+    assert.equal(await page.locator("[data-visualization]").count(), 2);
+    assert.equal(await card.locator("[data-experiment]").count(), 2);
+    assert.equal(await card.locator('[data-experiment="previous"]').isDisabled(), true);
+    assert.equal(await card.locator('[data-experiment="next"]').isEnabled(), true);
     assert.ok(!(await card.innerText()).includes("Afternoon Thunderstorm"));
     assert.ok(!(await card.innerText()).includes("15:00"));
     assert.equal(await card.locator("[data-reset]").count(), 0, "Reset button should be absent");
@@ -212,6 +222,40 @@ try {
       await cdp.detach();
       console.log("[check-visualization] Touch: two-finger pan preserves orientation/zoom, pinch zooms, one-finger rotation and Home restore passed");
     }
+    const video = page.locator('[data-visualization][data-kind="youtube"]');
+    const frame = video.locator("[data-youtube]");
+    const videoSource = "https://www.youtube-nocookie.com/embed/Z440GYvxCAs";
+    assert.equal(youtubeRequests.length, 0, "3D interaction must not load the hidden video");
+    await card.locator('[data-experiment="next"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-youtube]").getAttribute("src") !== null);
+    assert.equal(await frame.getAttribute("src"), videoSource);
+    await page.frameLocator("[data-youtube]").getByText("YouTube test player").waitFor();
+    assert.equal(youtubeRequests.length, 1, "Selecting the video must load its embed once");
+    assert.equal(await card.isHidden(), true);
+    assert.equal(await video.isVisible(), true);
+    assert.equal(await video.locator("figcaption").textContent(), "Strong Rotating Clusters");
+    assert.equal(await video.locator('[data-experiment="next"]').isDisabled(), true);
+    assert.equal(await video.locator('[data-experiment="previous"]').evaluate((button) => button === document.activeElement), true, "Focus must move to an enabled arrow at the end");
+    assert.equal(await video.locator("[data-canvas], [data-view], [data-zoom], [data-legend]").count(), 0, "Videos must not show 3D controls");
+    assert.equal(await video.locator("a").getAttribute("href"), "https://www.youtube.com/watch?v=Z440GYvxCAs");
+    const videoGeometry = await video.locator("[data-visualization-viewport]").boundingBox();
+    assert.ok(Math.abs(videoGeometry.width / videoGeometry.height - 16 / 9) < 0.01, "Video must retain 16:9 on desktop and mobile");
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.locator("#visualization").screenshot({ path: `artifacts/visualization/video-${width}.png` });
+    await video.locator('[data-experiment="previous"]').click();
+    assert.equal(await frame.getAttribute("src"), null, "Leaving the video must unload its player and stop playback");
+    assert.equal(await card.isVisible(), true);
+    assert.equal(await card.getAttribute("data-state"), "ready", "Returning must preserve the ready 3D scene");
+    assert.equal(packages.length, 1, "Switching back must not fetch the scene again");
+    assert.equal(await card.locator('[data-experiment="next"]').evaluate((button) => button === document.activeElement), true);
+    await card.locator('[data-experiment="next"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForFunction(() => !document.querySelector("[data-youtube]").hasAttribute("src"));
+    await video.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+    await video.locator('[data-experiment="previous"]').click();
+    console.log(`[check-visualization] ${width}px: lazy YouTube, 16:9 layout, carousel focus, player unload/reload and retained 3D scene passed (embed response stubbed)`);
     assert.deepEqual(failures, []);
     console.log(`[check-visualization] ${width}px: Gallery ${geometry.sectionHeight.toFixed(0)}px / ${geometry.availableHeight}px, scene ${geometry.width.toFixed(0)}px vs Research ${geometry.researchWidth.toFixed(0)}px; controls, responsive legend/help, lazy loading, Top default/Home, Shift-pan, rotation and zoom passed`);
     if (width === 1440) {

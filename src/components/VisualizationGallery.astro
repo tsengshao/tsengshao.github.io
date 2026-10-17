@@ -15,28 +15,36 @@ const experiments = (await getCollection("visualizations"))
 
     <div class="visualization-gallery" data-visualization-gallery aria-roledescription={experiments.length > 1 ? "carousel" : undefined} aria-label="Visualization experiments">
       {experiments.map(({ data, id }, index) => (
-        <figure class="visualization-card" data-visualization={id} data-scene={withBase(data.scene)} data-default-zoom={data.zoom} data-default-view={data.defaultView} data-state="idle" hidden={index !== 0} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${experiments.length}: ${data.title}`}>
-          <figcaption class="visualization-simulation">{data.simulation}</figcaption>
-          <div class="visualization-viewport" data-visualization-viewport>
-            <img class="visualization-preview" src={withBase(data.preview)} alt={data.previewAlt} width="1200" height="752" loading="lazy" decoding="async" />
-            <div class="visualization-canvas" data-canvas tabindex="0" role="region" aria-label={`${data.title}: interactive 3D scene`} aria-describedby={`scene-help-${id}`} title="Arrow keys to rotate, +/− to zoom, Home to reset" aria-hidden="true"></div>
-            <div class="visualization-load" role="status" aria-live="polite"><span data-load-status></span><button type="button" class="visualization-button" data-retry hidden>Try again</button></div>
-          </div>
-          <div class="visualization-legend" data-legend hidden aria-label="Rainfall color scale in millimeters per hour"></div>
-          <div class="visualization-toolbar" role="group" aria-label="Scene controls">
-            <div class="visualization-views" role="group" aria-label="View Taiwan from">
-              <button type="button" class="visualization-button" data-view="top" aria-pressed={data.defaultView === "top" ? "true" : "false"} disabled>Top</button>
-              <button type="button" class="visualization-button" data-view="north" aria-pressed={data.defaultView === "north" ? "true" : "false"} disabled>North</button>
-              <button type="button" class="visualization-button" data-view="southwest" aria-pressed={data.defaultView === "southwest" ? "true" : "false"} disabled>Southwest</button>
-              <button type="button" class="visualization-button" data-view="south" aria-pressed={data.defaultView === "south" ? "true" : "false"} disabled>South</button>
+        <figure class="visualization-card" data-visualization={id} data-kind={data.kind} data-scene={data.kind === "scene" ? withBase(data.scene) : undefined} data-default-zoom={data.kind === "scene" ? data.zoom : undefined} data-default-view={data.kind === "scene" ? data.defaultView : undefined} data-state="idle" hidden={index !== 0} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${experiments.length}: ${data.title}`}>
+          {data.kind === "scene" ? <>
+            <figcaption class="visualization-simulation">{data.simulation}</figcaption>
+            <div class="visualization-viewport" data-visualization-viewport>
+              <img class="visualization-preview" src={withBase(data.preview)} alt={data.previewAlt} width="1200" height="752" loading="lazy" decoding="async" />
+              <div class="visualization-canvas" data-canvas tabindex="0" role="region" aria-label={`${data.title}: interactive 3D scene`} aria-describedby={`scene-help-${id}`} title="Arrow keys to rotate, +/− to zoom, Home to reset" aria-hidden="true"></div>
+              <div class="visualization-load" role="status" aria-live="polite"><span data-load-status></span><button type="button" class="visualization-button" data-retry hidden>Try again</button></div>
             </div>
-            <div class="visualization-zoom" role="group" aria-label="Zoom controls">
-              <button type="button" class="visualization-button visualization-icon" data-zoom="in" aria-label="Zoom in" disabled>+</button>
-              <output class="visualization-zoom-value" data-zoom-value aria-label="Zoom magnification">{data.zoom}×</output>
-              <button type="button" class="visualization-button visualization-icon" data-zoom="out" aria-label="Zoom out" disabled>−</button>
+            <div class="visualization-legend" data-legend hidden aria-label="Rainfall color scale in millimeters per hour"></div>
+            <div class="visualization-toolbar" role="group" aria-label="Scene controls">
+              <div class="visualization-views" role="group" aria-label="View Taiwan from">
+                <button type="button" class="visualization-button" data-view="top" aria-pressed={data.defaultView === "top" ? "true" : "false"} disabled>Top</button>
+                <button type="button" class="visualization-button" data-view="north" aria-pressed={data.defaultView === "north" ? "true" : "false"} disabled>North</button>
+                <button type="button" class="visualization-button" data-view="southwest" aria-pressed={data.defaultView === "southwest" ? "true" : "false"} disabled>Southwest</button>
+                <button type="button" class="visualization-button" data-view="south" aria-pressed={data.defaultView === "south" ? "true" : "false"} disabled>South</button>
+              </div>
+              <div class="visualization-zoom" role="group" aria-label="Zoom controls">
+                <button type="button" class="visualization-button visualization-icon" data-zoom="in" aria-label="Zoom in" disabled>+</button>
+                <output class="visualization-zoom-value" data-zoom-value aria-label="Zoom magnification">{data.zoom}×</output>
+                <button type="button" class="visualization-button visualization-icon" data-zoom="out" aria-label="Zoom out" disabled>−</button>
+              </div>
             </div>
-          </div>
-          <p id={`scene-help-${id}`} class="visualization-help"><span class="visualization-desktop-help">Drag to rotate · Shift-drag to pan · Scroll or pinch to zoom<span class="visualization-keyboard-help"> · Arrow keys to rotate, +/− to zoom, Home to reset</span></span><span class="visualization-touch-help">Drag to rotate · Two-finger drag to pan · Pinch to zoom</span></p>
+            <p id={`scene-help-${id}`} class="visualization-help"><span class="visualization-desktop-help">Drag to rotate · Shift-drag to pan · Scroll or pinch to zoom<span class="visualization-keyboard-help"> · Arrow keys to rotate, +/− to zoom, Home to reset</span></span><span class="visualization-touch-help">Drag to rotate · Two-finger drag to pan · Pinch to zoom</span></p>
+          </> : <>
+            <figcaption class="visualization-simulation">{data.title}</figcaption>
+            <div class="visualization-viewport visualization-viewport--video" data-visualization-viewport>
+              <iframe data-youtube data-src={`https://www.youtube-nocookie.com/embed/${data.videoId}`} title={`${data.title} — YouTube video`} width="560" height="315" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+            <p class="visualization-help"><a href={`https://www.youtube.com/watch?v=${data.videoId}`} target="_blank" rel="noopener noreferrer">Watch on YouTube <span aria-hidden="true">↗</span></a></p>
+          </>}
           {experiments.length > 1 && (
             <div class="rr-controls visualization-caption-row">
               <div class="rr-arrows" aria-label="Visualization carousel controls">
@@ -95,6 +103,8 @@ const experiments = (await getCollection("visualizations"))
   .visualization-touch-help { display: none; }
   .visualization-keyboard-help { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .visualization-caption-row { grid-column: 2; grid-row: 4; margin-top: 4px; }
+  .visualization-viewport--video { aspect-ratio: 16 / 9; background: #000; }
+  .visualization-viewport--video iframe { display: block; width: 100%; height: 100%; border: 0; }
   @media (max-width: 600px) {
     .visualization-card { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
     .visualization-simulation { grid-column: 1 / -1; grid-row: 1; }
@@ -107,6 +117,7 @@ const experiments = (await getCollection("visualizations"))
     .visualization-zoom { grid-column: 2; justify-self: end; flex-direction: row-reverse; }
     .visualization-help { grid-column: 1 / -1; grid-row: 4; }
     .visualization-caption-row { grid-column: 1 / -1; grid-row: 5; }
+    .visualization-viewport--video { aspect-ratio: 16 / 9; }
   }
   @media (max-width: 600px), (hover: none) and (pointer: coarse) {
     .visualization-desktop-help { display: none; }
