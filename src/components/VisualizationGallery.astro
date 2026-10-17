@@ -1,0 +1,113 @@
+---
+import { getCollection } from "astro:content";
+import { withBase } from "../lib/urls";
+
+const experiments = (await getCollection("visualizations"))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="visualization" class="section section--alt section-anchor visualization-section" aria-labelledby="visualization-title">
+  <div class="container">
+    <header class="topic-heading visualization-heading">
+      <h2 id="visualization-title">Visualization</h2>
+    </header>
+
+    <div class="visualization-gallery" data-visualization-gallery aria-roledescription={experiments.length > 1 ? "carousel" : undefined} aria-label="Visualization experiments">
+      {experiments.map(({ data, id }, index) => (
+        <figure class="visualization-card" data-visualization={id} data-scene={withBase(data.scene)} data-default-zoom={data.zoom} data-default-view={data.defaultView} data-state="idle" hidden={index !== 0} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${experiments.length}: ${data.title}`}>
+          <figcaption class="visualization-simulation">{data.simulation}</figcaption>
+          <div class="visualization-viewport" data-visualization-viewport>
+            <img class="visualization-preview" src={withBase(data.preview)} alt={data.previewAlt} width="1200" height="752" loading="lazy" decoding="async" />
+            <div class="visualization-canvas" data-canvas tabindex="0" role="region" aria-label={`${data.title}: interactive 3D scene`} aria-describedby={`scene-help-${id}`} title="Arrow keys to rotate, +/− to zoom, Home to reset" aria-hidden="true"></div>
+            <div class="visualization-load" role="status" aria-live="polite"><span data-load-status></span><button type="button" class="visualization-button" data-retry hidden>Try again</button></div>
+          </div>
+          <div class="visualization-legend" data-legend hidden aria-label="Rainfall color scale in millimeters per hour"></div>
+          <div class="visualization-toolbar" role="group" aria-label="Scene controls">
+            <div class="visualization-views" role="group" aria-label="View Taiwan from">
+              <button type="button" class="visualization-button" data-view="top" aria-pressed={data.defaultView === "top" ? "true" : "false"} disabled>Top</button>
+              <button type="button" class="visualization-button" data-view="north" aria-pressed={data.defaultView === "north" ? "true" : "false"} disabled>North</button>
+              <button type="button" class="visualization-button" data-view="southwest" aria-pressed={data.defaultView === "southwest" ? "true" : "false"} disabled>Southwest</button>
+              <button type="button" class="visualization-button" data-view="south" aria-pressed={data.defaultView === "south" ? "true" : "false"} disabled>South</button>
+            </div>
+            <div class="visualization-zoom" role="group" aria-label="Zoom controls">
+              <button type="button" class="visualization-button visualization-icon" data-zoom="in" aria-label="Zoom in" disabled>+</button>
+              <output class="visualization-zoom-value" data-zoom-value aria-label="Zoom magnification">{data.zoom}×</output>
+              <button type="button" class="visualization-button visualization-icon" data-zoom="out" aria-label="Zoom out" disabled>−</button>
+            </div>
+          </div>
+          <p id={`scene-help-${id}`} class="visualization-help"><span class="visualization-desktop-help">Drag to rotate · Shift-drag to pan · Scroll or pinch to zoom<span class="visualization-keyboard-help"> · Arrow keys to rotate, +/− to zoom, Home to reset</span></span><span class="visualization-touch-help">Drag to rotate · Two-finger drag to pan · Pinch to zoom</span></p>
+          {experiments.length > 1 && (
+            <div class="rr-controls visualization-caption-row">
+              <div class="rr-arrows" aria-label="Visualization carousel controls">
+                <button class="rr-arrow" type="button" data-experiment="previous" aria-label="Previous visualization" disabled={index === 0}><span aria-hidden="true">‹</span></button>
+                <button class="rr-arrow" type="button" data-experiment="next" aria-label="Next visualization" disabled={index === experiments.length - 1}><span aria-hidden="true">›</span></button>
+              </div>
+            </div>
+          )}
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initializeVisualizationGalleries } from "../lib/visualization";
+  initializeVisualizationGalleries();
+</script>
+
+<style>
+  .visualization-section { padding-block: 28px; }
+  .visualization-heading { margin-bottom: 20px; }
+  .visualization-heading::after { margin-top: 14px; }
+  .visualization-gallery { width: 100%; max-width: 800px; margin: 0 auto; }
+  .visualization-simulation { grid-column: 2; grid-row: 1; margin-bottom: 10px; color: var(--muted); font-size: 14px; text-align: center; }
+  .visualization-card { display: grid; grid-template-columns: 80px minmax(0, 1fr) 80px; column-gap: 20px; margin: 0; }
+  .visualization-card[hidden] { display: none; }
+  .visualization-viewport { grid-column: 2; grid-row: 2; position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--r); background: #625d5a; }
+  .visualization-preview { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .visualization-canvas { position: absolute; inset: 0; margin: auto; opacity: 0; pointer-events: none; touch-action: pan-y; }
+  .visualization-card[data-state="ready"] .visualization-canvas { opacity: 1; pointer-events: auto; cursor: grab; touch-action: none; }
+  .visualization-card[data-state="ready"] .visualization-canvas:active { cursor: grabbing; }
+  .visualization-card[data-state="ready"] .visualization-preview { visibility: hidden; }
+  .visualization-canvas:focus-visible { outline: 3px solid rgba(11,42,111,.35); outline-offset: -4px; }
+  .visualization-canvas :global(canvas) { display: block; }
+  .visualization-canvas :global(.native-overlay) { pointer-events: none; }
+  .visualization-load { position: absolute; top: 12px; left: 12px; right: 12px; color: var(--muted); font-size: 12px; text-align: center; }
+  .visualization-load:has([data-load-status]:not(:empty)) { padding: 5px 9px; border-radius: 10px; background: rgba(255,255,255,.9); }
+  .visualization-load button { margin-left: 8px; }
+  .visualization-legend { grid-column: 3; grid-row: 2; align-self: start; font-size: 11px; color: var(--muted); pointer-events: none; padding: 0 0 8px; }
+  .visualization-legend :global(.legend-scale) { position: relative; height: 90px; margin-top: 10px; padding-left: 18px; }
+  .visualization-legend :global(.legend-gradient) { position: absolute; inset: 0 auto 0 0; width: 7px; border-radius: 3px; }
+  .visualization-legend :global(.legend-tick) { position: absolute; transform: translateY(50%); font-variant-numeric: tabular-nums; }
+  .visualization-toolbar { display: contents; }
+  .visualization-views, .visualization-zoom { grid-row: 2; align-self: end; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .visualization-views { grid-column: 1; justify-self: end; align-items: flex-end; }
+  .visualization-zoom { grid-column: 3; justify-self: start; }
+  .visualization-button { border: 0; border-radius: 999px; padding: 7px 10px; min-height: 30px; background: rgba(15,23,42,.06); color: rgba(11,18,32,.58); font: inherit; font-size: 12px; cursor: pointer; transition: background .2s ease, color .2s ease; }
+  .visualization-button[aria-pressed="true"] { background: rgba(11,42,111,.10); color: var(--accent); }
+  .visualization-button:disabled { opacity: .4; cursor: default; }
+  .visualization-button:not(:disabled):hover { background: rgba(11,42,111,.10); color: var(--accent); }
+  .visualization-icon { width: 30px; padding: 0; font-size: 19px; }
+  .visualization-zoom-value { min-width: 26px; color: var(--muted); font-size: 11px; text-align: center; font-variant-numeric: tabular-nums; }
+  .visualization-help { grid-column: 2; grid-row: 3; margin-top: 10px; color: var(--muted); font-size: 11px; text-align: center; line-height: 1.5; }
+  .visualization-touch-help { display: none; }
+  .visualization-keyboard-help { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .visualization-caption-row { grid-column: 2; grid-row: 4; margin-top: 4px; }
+  @media (max-width: 600px) {
+    .visualization-card { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; }
+    .visualization-simulation { grid-column: 1 / -1; grid-row: 1; }
+    .visualization-legend { grid-column: 1 / -1; grid-row: 2; justify-self: end; z-index: 2; margin: 12px; padding: 0; background: transparent; color: rgba(255,255,255,.92); text-shadow: 0 1px 3px rgba(0,0,0,.65); }
+    .visualization-legend :global(.legend-scale) { height: 60px; }
+    .visualization-viewport { grid-column: 1 / -1; grid-row: 2; aspect-ratio: 4 / 3; }
+    .visualization-views, .visualization-zoom { grid-row: 3; align-self: start; margin-top: 12px; flex-direction: row; }
+    .visualization-button { padding: 6px 8px; font-size: 11px; }
+    .visualization-views { grid-column: 1; justify-self: start; align-items: center; flex-wrap: wrap; max-width: 100%; gap: 4px; }
+    .visualization-zoom { grid-column: 2; justify-self: end; flex-direction: row-reverse; }
+    .visualization-help { grid-column: 1 / -1; grid-row: 4; }
+    .visualization-caption-row { grid-column: 1 / -1; grid-row: 5; }
+  }
+  @media (max-width: 600px), (hover: none) and (pointer: coarse) {
+    .visualization-desktop-help { display: none; }
+    .visualization-touch-help { display: inline; }
+  }
+</style>

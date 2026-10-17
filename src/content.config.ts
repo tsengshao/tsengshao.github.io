@@ -35,6 +35,21 @@ const projects = defineCollection({
   }),
 });
 
+const visualizations = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/visualizations" }),
+  schema: z.object({
+    title: z.string(),
+    simulation: z.string(),
+    order: z.number().int().default(0),
+    preview: pathOrUrlOrEmpty,
+    previewAlt: z.string(),
+    scene: pathOrUrlOrEmpty,
+    time: z.string(),
+    zoom: z.number().positive().default(1),
+    defaultView: z.enum(["top", "north", "southwest", "south"]).default("top"),
+  }),
+});
+
 const author = z.object({
   name: z.string(),
   roles: z
@@ -158,6 +173,7 @@ const talks = defineCollection({
 
 export const collections = {
   projects,
+  visualizations,
   publications,
   education,
   honors,
