@@ -19,18 +19,19 @@ export const siteProfile = {
   cvUpdated: "September 2026",
   themes: [
     {
-      title: "Convection-circulation coupling",
-      text: "Mechanisms linking organized convection, moisture aggregation, inflow structure, and moist vortex development.",
+      title: "convection–circulation coupling",
+      text: "Physical mechanisms linking convective organization, moisture aggregation, low-level inflow, and moist vortex development.",
     },
     {
-      title: "Idealized numerical experiments",
-      text: "Cloud-resolving simulations designed to isolate causal processes rather than only reproduce realistic outcomes.",
+      title: "cloud-resolving simulations",
+      text: "Controlled numerical experiments designed to isolate the physical mechanisms governing convective organization and circulation development.",
     },
     {
-      title: "Process-oriented diagnostics",
-      text: "Quantitative frameworks for evaluating convective behavior in global storm-resolving models against high-resolution references.",
+      title: "process-oriented diagnostics",
+      text: "Quantitative, physically interpretable diagnostics to identify the origins of convective biases in GSRMs and provide guidance for model improvement.",
     },
   ],
+
   cvSummary: [
     "Current appointment: Department of Atmospheric Sciences, National Taiwan University.",
     "Research emphasis: convective organization, tropical cyclone seed genesis, and GSRM diagnostics.",
