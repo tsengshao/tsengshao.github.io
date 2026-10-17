@@ -1,7 +1,7 @@
 ---
 title: Physical mechanisms of convective aggregation and convection–circulation coupling
 short: How does convective aggregation shape circulation and moist vortex development?
-summary: I use idealized cloud-resolving simulations with the Vector Vorticity Equation model (VVM) to investigate the physical mechanisms linking convective organization, aggregation, and circulation development. My previous work demonstrated and quantified how the degree of convective aggregation and associated low-level inflow influence moist vortex intensification. Building on these findings, I am investigating how convection, moisture aggregation, and circulation feedbacks interact across spatial scales. The goal is to understand the mechanisms governing convective aggregation and its interactions with circulation, and how these processes contribute to moist vortex formation and intensification, providing insights into tropical cyclone seed genesis.
+summary: I use idealized cloud-resolving simulations with the Vector Vorticity equation cloud-resolving Model (VVM) to investigate the physical mechanisms linking convective organization, aggregation, and circulation development. My previous work demonstrated and quantified how the degree of convective aggregation and associated low-level inflow influence moist vortex intensification. Building on these findings, I am investigating how convection, moisture aggregation, and circulation feedbacks interact across spatial scales. The goal is to understand the mechanisms governing convective aggregation and its interactions with circulation, and how these processes contribute to moist vortex formation and intensification, providing insights into tropical cyclone seed genesis.
 
 order: 2
 featured: true
@@ -13,12 +13,12 @@ media:
   - kind: image
     src: "/media/figures/seed_FIG12_schematic.webp"
     alt: "Overview schematic of impact of aggregation vortex genesis diagnosis"
-    label: "convection aggregation in vortex genesis"
+    label: "convective aggregation in vortex genesis"
     link: "https://doi.org/10.1029/2025JD045526"
 
   - kind: image
     src: "/media/figures/seed_FIG11_scatter.webp"
-    label: "convection aggregation in vortex genesis"
+    label: "convective aggregation in vortex genesis"
     link: "https://doi.org/10.1029/2025JD045526"
 ---
 
