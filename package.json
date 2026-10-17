@@ -13,6 +13,7 @@
     "dev": "astro dev",
     "prebuild": "node scripts/gen-site-meta.mjs",
     "build": "npm run validate:content && npm run cv:pdf && astro build",
+    "precheck": "node scripts/gen-site-meta.mjs",
     "check": "astro check",
     "check:links": "node scripts/check-dist-links.mjs",
     "verify": "npm run check && npm run build && npm run check:links",
