@@ -12,10 +12,11 @@ export const siteProfile = {
   contacts: {
     email: "d12229003@ntu.edu.tw",
     website: "https://tsengshao.github.io",
+    github: "https://github.com/tsengshao",
     orcid: "https://orcid.org/0009-0007-0144-8017",
     scholar: "https://scholar.google.com/citations?user=2Q2ui7gAAAAJ&hl=zh-TW&oi=ao",
   },
-  cvUpdated: "August 2026",
+  cvUpdated: "September 2026",
   themes: [
     {
       title: "Convection-circulation coupling",

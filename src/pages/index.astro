@@ -12,6 +12,7 @@ const projects = (await getCollection("projects"))
 
 const contactLinks = [
   siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, external: false },
+  siteProfile.contacts.github && { label: "GitHub", href: siteProfile.contacts.github, external: true },
   { label: "CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), external: false, download: true },
 ].filter(Boolean) as Array<{ label: string; href: string; external: boolean; download?: boolean }>;
 ---

@@ -146,7 +146,7 @@ Create a Markdown file in `src/content/projects/`. Set:
 
 Featured research topics are presented directly on the home page. The primary navigation links to that section instead of a separate Research overview page.
 
-The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row intentionally contains only Email and the Selected CV download; Google Scholar and ORCID are centered directly below the Publications heading.
+The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row contains Email, GitHub, and the Selected CV download; Google Scholar and ORCID are centered directly below the Publications heading.
 
 ## Optimize research media
 
