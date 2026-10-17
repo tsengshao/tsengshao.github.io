@@ -22,13 +22,14 @@ Before committing or deploying:
 npm run verify
 ```
 
-`verify` runs Astro/TypeScript checks, validates content and referenced assets, builds the site, and checks the generated internal links.
+`verify` runs Astro/TypeScript checks, camera-transition and scene-integrity regression tests, validates content and referenced assets, builds the site, and checks the generated internal links.
 
 ## Content locations
 
 | Content | Directory |
 |---|---|
 | Research topics/cards | `src/content/projects/` |
+| Visualization gallery entries | `src/content/visualizations/` |
 | Education | `src/content/education/` |
 | Publications | `src/content/publications/` |
 | Awards and support | `src/content/honors/` |
@@ -148,6 +149,38 @@ Featured research topics are presented directly on the home page. The primary na
 
 The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row contains Email, GitHub, and the Selected CV download; Google Scholar and ORCID are centered directly below the Publications heading.
 
+## Gallery
+
+The homepage has a centered Gallery below the research topics, distinguished by the site's pale alternate section background. Its desktop scene is 600px wide, comparable to Research images, within an 800px layout that reserves space for controls. Mobile scenes fit the content width. The only heading is `Gallery`, with `TaiwanVVMex Simulation` above the scene; there is no introductory subtitle, bottom title, or visible time label. Desktop view buttons form a right-aligned vertical column outside the lower-left, toward the image; the lower-right zoom column places + above the magnification and − below it. There is no Reset button. On mobile both control groups run horizontally below the image, views on the left and −/magnification/+ on the right; view buttons wrap on narrow screens without overlapping zoom controls. The rainfall color scale uses the original scene lookup table: outside the upper-right on desktop, overlaid inside the upper-right on mobile with a transparent background and light, shadowed labels. It does not intercept scene gestures.
+
+Entries live in `src/content/visualizations/` and use `src/components/VisualizationGallery.astro`; `preview` and `scene` reference the published WebP and single-frame `.vvmweb` package under `public/media/visualizations/`. Entries are sorted by `order`. A single entry has no carousel arrows; adding a second entry shows them, with disabled controls at the ends.
+
+TaiwanVVMex displays a fixed 15:00 scene, initially showing the complete scene from Top at fitted 1× zoom against the original gray ParaView background. `defaultView` and `zoom` in its content entry control the initial view; Home restores them. The view buttons are Top, North, Southwest, and South: Southwest resets to 1.7×, South to 1.2×, and Top/North to 1× on selection. North looks horizontally from due north, replacing Northwest. South and Southwest retain their tilted-down perspectives and pan the scene upward on screen without changing orientation. Their framing centers are raised by 1/3 and 1/4 of the vertical extent respectively, followed by a screen-up pan using the same respective distances. Southwest is turned 15° farther west at its previous elevation angle. Drag to rotate around the Taiwan terrain-center pivot with Z upright; Shift-drag pans by translating camera and focus together. On touch devices, one-finger drag rotates, two-finger drag pans, and pinch zooms, with matching mobile instructions. Wheel, pinch, +/− buttons, and keyboard +/− zoom from 0.5× to 8×. Arrow keys rotate the focused scene. Zoom and panning never alter scientific geometry or vertical scale.
+
+Preset animations use continuous upright yaw/pitch interpolation, including north-up at the exact Top view. This avoids the old near-pole screen-up switch that caused a visible jump. `npm run check:camera` samples transitions, including panned and interrupted poses; it is included in `npm run verify`.
+
+The vtk.js engine and 9.8 MB scene load only when the gallery approaches the viewport. A matching WebP is shown first and remains available if WebGL or loading fails; Try again retries loading. Motion is finite and respects reduced-motion settings. GPU resources are released when leaving the page. Renderer/camera modules were copied from `Paraview-VVMex` into `src/lib/vvm/`; the website runs independently of that project and needs no rendering server or React.
+
+Every decompressed asset must match its declared length, SHA-256 and content-addressed key. HTTPS/localhost use native Web Crypto; when `crypto.subtle` is unavailable (for example a phone visiting a LAN HTTP address), the loader lazily imports the pinned `@noble/hashes` SHA-256 implementation. Neither path skips verification. This checks integrity against package metadata, not HTTPS transport authenticity. `npm run check:scene`, included in `verify`, tests both hash paths, missing crypto, offset views, corruption rejection and all published assets.
+
+For phone previews on the same LAN, start `npm run dev -- --host` and use the Network URL it reports. If adding a dependency leaves the running development server reporting `504 Outdated Optimize Dep`, restart that server and reload the page.
+
+To prepare the published single-frame package from an existing complete animation package:
+
+```sh
+npm run media:visualization -- /path/to/taiwanvvm_4km_MUSCL.vvmweb
+```
+
+This verifies the 15:00 annotation and all selected asset hashes, then copies only that frame's required compressed assets without resampling or simplifying geometry, arrays, or textures. The original overlay is omitted; the rainfall scale uses accessible HTML and time remains in the data metadata. Package preparation is manual, not part of the production build. Keep the full animation local; commit only the curated published scene/preview and source code when ready.
+
+After building and starting `npm run preview -- --host 127.0.0.1 --port 4325`, run:
+
+```sh
+npm run check:visualization -- http://127.0.0.1:4325/
+```
+
+This checks desktop/mobile layout and hints, the responsive color scale, lazy loading, Top default/Home, keyboard/pointer rotation, Shift-panning, wheel/pinch zoom, and failed-load retry. Emulated touch sequences verify that two-finger pan preserves orientation and zoom, pinch still zooms, and one-finger rotation/Home work afterward. An isolated insecure HTTP test origin verifies that mobile loading works without Web Crypto and still rejects mismatched SHA-256 values. It also samples actual camera frames with reduced motion off to catch discontinuities approaching Top and checks the preset focus offsets and level North view. Screenshots and camera traces go to ignored `artifacts/visualization/`. To refresh the preview after a deliberate camera change, convert the generated `default-view.png` to the published WebP and update its intrinsic dimensions in the gallery component if necessary.
+
 ## Optimize research media
 
 Original media and generated previews stay local, while approved web assets under `public/media/` are committed and deployed:
@@ -215,5 +248,7 @@ In GitHub repository settings, select **Pages → Source → GitHub Actions**. E
 | `npm run media:optimize` | Convert local source media into web-ready previews |
 | `npm run build` | Production build |
 | `npm run check:links` | Validate internal links in `dist/` |
+| `npm run check:camera` | Check camera-transition continuity, endpoints, and orientation |
+| `npm run check:scene` | Check native/fallback SHA-256, asset integrity and corruption rejection |
 | `npm run verify` | Run all pre-deployment checks |
 | `npm run cv:pdf` | Generate local Selected and Full CV PDFs and refresh the public Selected copy |

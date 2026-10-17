@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import HeroSchematic from "../components/HeroSchematic.astro";
 import ResearchRow from "../components/ResearchRow.astro";
+import VisualizationGallery from "../components/VisualizationGallery.astro";
 import { siteProfile } from "../data/site";
 import { withBase } from "../lib/urls";
 
@@ -68,4 +69,5 @@ const contactLinks = [
       </div>
     </section>
   ))}
+  <VisualizationGallery />
 </BaseLayout>

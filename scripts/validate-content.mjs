@@ -65,6 +65,11 @@ for (const { relativePath, data } of readCollection("projects")) {
   }
 }
 
+for (const { relativePath, data } of readCollection("visualizations")) {
+  checkWebOrPublicPath(data.preview, relativePath, "preview");
+  checkWebOrPublicPath(data.scene, relativePath, "scene");
+}
+
 for (const { relativePath, data } of readCollection("talks")) {
   for (const field of ["abstract", "slides", "poster", "video", "other"]) {
     checkWebOrPublicPath(data.links?.[field], relativePath, `links.${field}`);

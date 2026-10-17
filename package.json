@@ -8,6 +8,10 @@
   "scripts": {
     "validate:content": "node scripts/validate-content.mjs",
     "media:optimize": "node scripts/optimize-media.mjs",
+    "media:visualization": "node scripts/prepare-visualization.mjs",
+    "check:visualization": "node scripts/check-visualization.mjs",
+    "check:camera": "node scripts/check-camera-transitions.mjs",
+    "check:scene": "node scripts/check-scene-package.mjs",
     "cv:pdf": "node scripts/render-cv-pdfs.mjs",
     "predev": "node scripts/gen-site-meta.mjs",
     "dev": "astro dev",
@@ -16,12 +20,16 @@
     "precheck": "node scripts/gen-site-meta.mjs",
     "check": "astro check",
     "check:links": "node scripts/check-dist-links.mjs",
-    "verify": "npm run check && npm run build && npm run check:links",
+    "verify": "npm run check && npm run check:camera && npm run check:scene && npm run build && npm run check:links",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.3.8"
+    "@kitware/vtk.js": "36.11.2",
+    "@noble/hashes": "2.4.0",
+    "astro": "^7.3.8",
+    "fflate": "0.8.3",
+    "gl-matrix": "3.4.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
