@@ -10,6 +10,7 @@ const experiments = (await getCollection("visualizations"))
   <div class="container">
     <header class="topic-heading visualization-heading">
       <h2 id="visualization-title">Visualization</h2>
+      <p class="visualization-intro">I enjoy creating scientific visualizations.</p>
     </header>
 
     <div class="visualization-gallery" data-visualization-gallery aria-roledescription={experiments.length > 1 ? "carousel" : undefined} aria-label="Visualization experiments">
@@ -58,6 +59,7 @@ const experiments = (await getCollection("visualizations"))
 <style>
   .visualization-section { padding-block: 28px; }
   .visualization-heading { margin-bottom: 20px; }
+  .visualization-intro { margin-top: 10px; color: var(--muted); }
   .visualization-heading::after { margin-top: 14px; }
   .visualization-gallery { width: 100%; max-width: 800px; margin: 0 auto; }
   .visualization-simulation { grid-column: 2; grid-row: 1; margin-bottom: 10px; color: var(--muted); font-size: 14px; text-align: center; }
