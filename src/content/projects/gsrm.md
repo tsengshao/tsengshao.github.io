@@ -1,7 +1,7 @@
 ---
 title: Process-oriented diagnostics of convective processes in GSRMs
-short: What controls biases in convective organization, and how can we diagnose them quantitatively?
-summary: This research topic focuses on the quantitative and physically interpretable characterization of key convective processes in global storm-resolving models (GSRMs) through integrated comparisons with large-eddy simulations (LES) and high-resolution observations. By applying quantitative, process-oriented diagnostics across models and scales, I assess the physical consistency of convective processes across different modeling frameworks, identify the physical origins of model biases, and provide guidance for improving the representation of convection in GSRMs.
+short: Why do GSRMs differ in their representation of convective organization, precipitation intensity, and diurnal evolution?
+summary: My research focuses on developing quantitative, process-oriented diagnostics to understand convective processes and identify the physical origins of biases in global storm-resolving models (GSRMs). My previous work quantified precipitation enhancement associated with convective mergers and evaluated how this process is represented across observations and GSRMs. Building on these findings, I am extending these diagnostics to investigate the diurnal evolution of convection, particularly over tropical islands, through comparisons among GSRMs, large-eddy simulations (LES), and observations. The ultimate goal is to provide physically grounded guidance for improving the representation of convective processes in GSRMs.
 
 order: 1
 featured: true

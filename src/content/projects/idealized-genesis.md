@@ -1,7 +1,7 @@
 ---
-title: Physical mechanisms of convection–circulation coupling in idealized simulations
-short: How does convection interact with circulation to generate moist vortices?
-summary: This research topic focuses on understanding the physical mechanisms governing the coupling between convection and circulation using idealized cloud-resolving simulations. Using idealized simulations with the Vector Vorticity Equation cloud-resolving model (VVM), I investigate how interactions among organized convection, convective clusters, moisture aggregation, and circulation lead to the formation and intensification of moist vortices. These idealized experiments aim to isolate causal pathways underlying convection–circulation coupling, providing a physically grounded framework for interpreting tropical cyclone seed genesis and related convective phenomena.
+title: Physical mechanisms of convective aggregation and convection–circulation coupling
+short: How does convective aggregation shape circulation and moist vortex development?
+summary: I use idealized cloud-resolving simulations with the Vector Vorticity Equation model (VVM) to investigate the physical mechanisms linking convective organization, aggregation, and circulation development. My previous work demonstrated and quantified how the degree of convective aggregation and associated low-level inflow influence moist vortex intensification. Building on these findings, I am investigating how convection, moisture aggregation, and circulation feedbacks interact across spatial scales. The goal is to understand the mechanisms governing convective aggregation and its interactions with circulation, and how these processes contribute to moist vortex formation and intensification, providing insights into tropical cyclone seed genesis.
 
 order: 2
 featured: true
