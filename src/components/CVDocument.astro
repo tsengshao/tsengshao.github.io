@@ -149,21 +149,6 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
           </section>
         )}
 
-        {honors.length > 0 && (
-          <section class="cv-doc-section" aria-labelledby="cv-awards-support">
-            <h2 id="cv-awards-support">Awards & Support</h2>
-            <ul class="cv-bullet-list">
-              {honors.map((award) => (
-                <li>
-                  <span class="cv-item-year">{award.data.year}</span> — {award.data.title}
-                  {award.data.org ? `, ${award.data.org}` : ""}
-                  {award.data.detail && <span class="cv-award-detail">{award.data.detail}</span>}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         {publicationGroups.length > 0 && (
           <section class="cv-doc-section" aria-labelledby="cv-publications">
             <h2 id="cv-publications">Publications</h2>
@@ -177,6 +162,21 @@ function formatAuthors(authors: CollectionEntry<"talks">["data"]["authors"]) {
                 </ul>
               </section>
             ))}
+          </section>
+        )}
+
+        {honors.length > 0 && (
+          <section class="cv-doc-section" aria-labelledby="cv-awards-support">
+            <h2 id="cv-awards-support">Awards & Support</h2>
+            <ul class="cv-bullet-list">
+              {honors.map((award) => (
+                <li>
+                  <span class="cv-item-year">{award.data.year}</span> — {award.data.title}
+                  {award.data.org ? `, ${award.data.org}` : ""}
+                  {award.data.detail && <span class="cv-award-detail">{award.data.detail}</span>}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
