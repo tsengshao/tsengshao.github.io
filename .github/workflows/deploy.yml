@@ -39,7 +39,7 @@ jobs:
           BASE_PATH: ${{ vars.BASE_PATH }}
 
       - name: Upload site
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
