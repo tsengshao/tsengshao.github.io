@@ -528,8 +528,10 @@ code{
   color: var(--muted);
   line-height: 1.7;
   font-size: var(--p);
-  hyphens: none;
-  text-align: left;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  text-align: justify;
+  text-align-last: left;
 }
 
 .research-more{
