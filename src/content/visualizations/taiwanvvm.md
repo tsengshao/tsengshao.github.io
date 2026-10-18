@@ -1,6 +1,6 @@
 ---
-title: "TaiwanVVMex Simulation"
-simulation: "TaiwanVVMex Simulation"
+title: "TaiwanVVMex"
+simulation: "TaiwanVVMex"
 order: 1
 preview: "/media/visualizations/taiwanvvm-1500.webp"
 previewAlt: "Top view of the TaiwanVVMex atmospheric simulation at 15:00, showing clouds, rainfall, and terrain over Taiwan."
