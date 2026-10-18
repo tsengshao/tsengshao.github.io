@@ -8,7 +8,8 @@ summary: Beyond model diagnostics, I also develop idealized numerical experiment
 order: 2
 featured: true
 tags: ["TC genesis", "convective organization", "VVM"]
-ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
+#ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
+ratio: "4/3"    # 可選：有的用 "4/3" 或 "1/1"
 fit: "contain"   # 或 "cover", contain
 
 media:
