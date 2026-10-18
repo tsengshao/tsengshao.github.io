@@ -11,7 +11,7 @@ function youtubeController(card: HTMLElement): Controller {
   };
   return {
     load: async () => {
-      if (card.hidden || frame.hasAttribute("src")) return;
+      if (frame.hasAttribute("src")) return;
       frame.src = frame.dataset.src!;
       card.dataset.state = "embedded";
     },
@@ -78,7 +78,7 @@ function sceneController(card: HTMLElement): Controller {
     legend.hidden = false;
   };
   const load = async () => {
-    if (dead || viewer || loading || card.hidden) return;
+    if (dead || viewer || loading) return;
     loading = true;
     pending = new AbortController();
     card.dataset.state = "loading";
@@ -159,38 +159,40 @@ export function initializeVisualizationGalleries() {
   document.querySelectorAll<HTMLElement>("[data-visualization-gallery]:not([data-ready])").forEach((gallery) => {
     gallery.dataset.ready = "true";
     const cards = [...gallery.querySelectorAll<HTMLElement>("[data-visualization]")];
-    const controllers = cards.map((card) => card.dataset.kind === "youtube" ? youtubeController(card) : sceneController(card));
-    let active = 0;
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) if (entry.isIntersecting && !cards[active].hidden) {
-        void controllers[active].load();
-      }
-    }, { rootMargin: "240px 0px" });
-    observer.observe(gallery);
-    gallery.querySelectorAll<HTMLButtonElement>("[data-experiment]").forEach((button) => button.addEventListener("click", () => {
-      const next = Math.max(0, Math.min(cards.length - 1, active + (button.dataset.experiment === "next" ? 1 : -1)));
-      if (next === active) return;
-      controllers[active].hide();
-      cards[active].hidden = true;
-      active = next;
-      cards[active].hidden = false;
-      cards[active].querySelectorAll<HTMLButtonElement>("[data-experiment]").forEach((control) => {
-        control.disabled = control.dataset.experiment === "next" ? active === cards.length - 1 : active === 0;
-      });
-      void controllers[active].load();
-      const preferred = cards[active].querySelector<HTMLButtonElement>(`[data-experiment="${button.dataset.experiment}"]`);
-      (preferred && !preferred.disabled ? preferred : cards[active].querySelector<HTMLButtonElement>("[data-experiment]:not(:disabled)"))?.focus();
+    const items = cards.map((card) => ({
+      viewport: card.querySelector<HTMLElement>("[data-visualization-viewport]")!,
+      kind: card.dataset.kind,
+      controller: card.dataset.kind === "youtube" ? youtubeController(card) : sceneController(card),
     }));
-    const cancelMotion = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) controllers.forEach((controller) => controller.hide());
-      else void controllers[active].load();
+    const controllers = new Map(items.map(({ viewport, controller }) => [viewport, controller]));
+    // Preload each scene independently; videos only load while their own frame is visible.
+    const preload = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) void controllers.get(entry.target as HTMLElement)?.load();
+    }, { rootMargin: "240px 0px" });
+    const visibility = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const controller = controllers.get(entry.target as HTMLElement)!;
+        if (entry.isIntersecting) void controller.load();
+        else controller.hide();
+      }
     });
-    cancelMotion.observe(gallery);
+    const observe = () => items.forEach(({ viewport, kind }) => {
+      if (kind === "scene") preload.observe(viewport);
+      visibility.observe(viewport);
+    });
+    observe();
+    // A restored back/forward-cache page needs fresh visibility callbacks.
+    window.addEventListener("pageshow", (event) => {
+      if (!event.persisted) return;
+      preload.disconnect();
+      visibility.disconnect();
+      observe();
+    });
     // Preserve back/forward-cache pages; release GPU resources when leaving for good.
     window.addEventListener("pagehide", (event) => {
       if (event.persisted) { controllers.forEach((controller) => controller.hide()); return; }
-      observer.disconnect();
-      cancelMotion.disconnect();
+      preload.disconnect();
+      visibility.disconnect();
       controllers.forEach((controller) => controller.dispose());
     });
   });

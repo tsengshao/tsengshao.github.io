@@ -28,7 +28,7 @@ try {
       return route.fulfill({ contentType: "text/html", body: "<!doctype html><title>YouTube test player</title><body style='margin:0;background:#000;color:white'>YouTube test player</body>" });
     });
     await page.goto(origin);
-    assert.equal(youtubeRequests.length, 0, "Hidden YouTube entries must not contact YouTube");
+    assert.equal(youtubeRequests.length, 0, "Offscreen YouTube entries must not contact YouTube");
     assert.equal(await page.locator("[data-youtube]").getAttribute("src"), null);
     assert.equal(packages.length, 0, "3D package must not load above the gallery");
     const card = page.locator("[data-visualization]").first();
@@ -41,7 +41,7 @@ try {
     };
     await card.scrollIntoViewIfNeeded();
     await page.waitForSelector('[data-visualization][data-state="ready"]', { timeout: 60000 });
-    assert.equal(packages.length, 1, "Only the selected single-frame package should load");
+    assert.equal(packages.length, 1, "The single-frame package should load once");
     assert.ok(packages[0].includes("taiwanvvm-1500.vvmweb"));
     const geometry = await page.evaluate(() => {
       const gallery = document.querySelector("[data-visualization-gallery]").getBoundingClientRect();
@@ -54,34 +54,32 @@ try {
       const zoom = document.querySelector(".visualization-zoom").getBoundingClientRect();
       const legendElement = document.querySelector("[data-legend]");
       const legend = legendElement.getBoundingClientRect();
-      const researchWidth = document.querySelector(".research-row .media-frame").getBoundingClientRect().width;
-      const vertical = (selector, rightAligned = false) => {
+      const video = document.querySelector('[data-kind="youtube"] [data-visualization-viewport]').getBoundingClientRect();
+      const sceneCard = document.querySelector('[data-kind="scene"]').getBoundingClientRect();
+      const videoCard = document.querySelector('[data-kind="youtube"]').getBoundingClientRect();
+      const horizontal = (selector, allowWrap = false) => {
         const buttons = [...document.querySelectorAll(`${selector} button`)].map((button) => button.getBoundingClientRect());
-        const edge = (button) => rightAligned ? button.right : button.x + button.width / 2;
-        return buttons.every((button, i) => !i || (button.top > buttons[i - 1].bottom && Math.abs(edge(button) - edge(buttons[0])) < 1));
-      };
-      const horizontal = (selector, allowWrap = false, reverse = false) => {
-        const buttons = [...document.querySelectorAll(`${selector} button`)].map((button) => button.getBoundingClientRect());
-        if (reverse) buttons.reverse();
         return buttons.every((button, i) => !i || (button.left > buttons[i - 1].right && Math.abs(button.y + button.height / 2 - (buttons[i - 1].y + buttons[i - 1].height / 2)) < 1) || (allowWrap && button.top > buttons[i - 1].bottom && button.left <= buttons[i - 1].left));
       };
       return {
-        width: viewport.width, researchWidth, sectionHeight, availableHeight,
-        outsideControls: innerWidth > 600 ? views.right <= viewport.left && zoom.left >= viewport.right : views.top >= viewport.bottom && zoom.top >= viewport.bottom && views.right < zoom.left,
-        legendPlacement: innerWidth > 600 ? legend.left >= viewport.right && legend.top <= viewport.top + 1 : legend.left >= viewport.left && legend.right <= viewport.right && legend.top >= viewport.top && legend.bottom <= viewport.bottom && Math.abs(viewport.right - legend.right - 12) < 1 && Math.abs(legend.top - viewport.top - 12) < 1,
+        width: viewport.width, sectionHeight, availableHeight,
+        equalFrames: Math.abs(viewport.height - video.height) < 1 && Math.abs(viewport.width - video.width) < 1 && Math.abs(viewport.width / viewport.height - 16 / 9) < 0.01,
+        arranged: innerWidth >= 1000 ? Math.abs(viewport.top - video.top) < 1 && sceneCard.right < videoCard.left : Math.abs(viewport.left - video.left) < 1 && sceneCard.bottom < videoCard.top,
+        outsideControls: views.top >= viewport.bottom && zoom.top >= viewport.bottom && views.right < zoom.left,
+        legendPlacement: legend.left >= viewport.left && legend.right <= viewport.right && legend.top >= viewport.top && legend.bottom <= viewport.bottom && Math.abs(viewport.right - legend.right - 12) < 1 && Math.abs(legend.top - viewport.top - 12) < 1,
         legendTransparent: getComputedStyle(legendElement).backgroundColor === "rgba(0, 0, 0, 0)",
-        legendPassThrough: innerWidth > 600 || Boolean(document.elementFromPoint(legend.left + 5, legend.top + 5)?.closest("[data-visualization-viewport]")),
-        controlsAligned: innerWidth > 600 ? vertical(".visualization-views", true) && vertical(".visualization-zoom") : horizontal(".visualization-views", innerWidth < 390) && horizontal(".visualization-zoom", false, true),
+        legendPassThrough: Boolean(document.elementFromPoint(legend.left + 5, legend.top + 5)?.closest("[data-visualization-viewport]")),
+        controlsAligned: horizontal(".visualization-views", true) && horizontal(".visualization-zoom"),
         centered: Math.abs(gallery.x + gallery.width / 2 - (box.x + box.width / 2)) < 1,
         overflow: document.documentElement.scrollWidth > innerWidth,
       };
     });
     assert.ok(geometry.centered);
     assert.equal(geometry.overflow, false);
-    assert.ok(geometry.width >= geometry.researchWidth * 0.95 && geometry.width <= geometry.researchWidth * 1.3, `Scene size should be comparable to Research media: ${JSON.stringify(geometry)}`);
-    assert.ok(geometry.sectionHeight <= geometry.availableHeight, `Entire gallery should fit: ${JSON.stringify(geometry)}`);
+    assert.ok(geometry.equalFrames, "Both media frames must have the same height and 16:9 ratio");
+    assert.ok(geometry.arranged, "Media must be side by side on wide screens and stacked on narrow screens");
     assert.ok(geometry.outsideControls);
-    assert.ok(geometry.legendPlacement, "Legend must be exterior on desktop and inside the mobile image's upper-right");
+    assert.ok(geometry.legendPlacement, "Legend must be inside the image's upper-right");
     assert.ok(geometry.legendTransparent);
     assert.ok(geometry.legendPassThrough, "Mobile legend must not intercept scene gestures");
     assert.ok(geometry.controlsAligned);
@@ -96,15 +94,14 @@ try {
     assert.equal(await page.locator("#visualization-title").textContent(), "Visualization");
     assert.equal(await page.locator(".visualization-heading p").textContent(), "I enjoy creating scientific visualizations.");
     assert.equal(await page.locator("[data-visualization]").count(), 2);
-    assert.equal(await card.locator("[data-experiment]").count(), 2);
-    assert.equal(await card.locator('[data-experiment="previous"]').isDisabled(), true);
-    assert.equal(await card.locator('[data-experiment="next"]').isEnabled(), true);
+    assert.equal(await page.locator("[data-experiment], [aria-roledescription=carousel], [aria-roledescription=slide]").count(), 0);
+    assert.equal(await page.locator("[data-visualization][hidden]").count(), 0);
     assert.ok(!(await card.innerText()).includes("Afternoon Thunderstorm"));
     assert.ok(!(await card.innerText()).includes("15:00"));
     assert.equal(await card.locator("[data-reset]").count(), 0, "Reset button should be absent");
     const plus = await card.locator('[data-zoom="in"]').boundingBox();
     const minus = await card.locator('[data-zoom="out"]').boundingBox();
-    assert.ok(width > 600 ? plus.y + plus.height < minus.y : minus.x + minus.width < plus.x, "Desktop: plus above minus; mobile: minus left, plus right");
+    assert.ok(minus.x + minus.width < plus.x, "Minus left, plus right at every width");
     assert.equal(await card.locator("[data-zoom-value]").textContent(), "1×");
     assert.equal(await card.locator('[data-view="top"]').getAttribute("aria-pressed"), "true", "Top should be the initial view");
     await page.evaluate(() => { const bar = document.querySelector("astro-dev-toolbar"); if (bar) bar.style.display = "none"; });
@@ -225,51 +222,89 @@ try {
     const video = page.locator('[data-visualization][data-kind="youtube"]');
     const frame = video.locator("[data-youtube]");
     const videoSource = "https://www.youtube-nocookie.com/embed/Z440GYvxCAs";
-    assert.equal(youtubeRequests.length, 0, "3D interaction must not load the hidden video");
-    await card.locator('[data-experiment="next"]').click();
-    await page.waitForFunction(() => document.querySelector("[data-youtube]").getAttribute("src") !== null);
-    assert.equal(await frame.getAttribute("src"), videoSource);
-    await page.frameLocator("[data-youtube]").getByText("YouTube test player").waitFor();
-    assert.equal(youtubeRequests.length, 1, "Selecting the video must load its embed once");
-    assert.equal(await card.isHidden(), true);
-    assert.equal(await video.isVisible(), true);
-    assert.equal(await video.locator("figcaption").textContent(), "Strong Rotating Clusters");
-    assert.equal(await video.locator('[data-experiment="next"]').isDisabled(), true);
-    assert.equal(await video.locator('[data-experiment="previous"]').evaluate((button) => button === document.activeElement), true, "Focus must move to an enabled arrow at the end");
-    assert.equal(await video.locator("[data-canvas], [data-view], [data-zoom], [data-legend]").count(), 0, "Videos must not show 3D controls");
-    assert.equal(await video.locator("a").getAttribute("href"), "https://www.youtube.com/watch?v=Z440GYvxCAs");
-    const videoGeometry = await video.locator("[data-visualization-viewport]").boundingBox();
-    assert.ok(Math.abs(videoGeometry.width / videoGeometry.height - 16 / 9) < 0.01, "Video must retain 16:9 on desktop and mobile");
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    await page.locator("#visualization").screenshot({ path: `artifacts/visualization/video-${width}.png` });
-    await video.locator('[data-experiment="previous"]').click();
-    assert.equal(await frame.getAttribute("src"), null, "Leaving the video must unload its player and stop playback");
-    assert.equal(await card.isVisible(), true);
-    assert.equal(await card.getAttribute("data-state"), "ready", "Returning must preserve the ready 3D scene");
-    assert.equal(packages.length, 1, "Switching back must not fetch the scene again");
-    assert.equal(await card.locator('[data-experiment="next"]').evaluate((button) => button === document.activeElement), true);
-    await card.locator('[data-experiment="next"]').click();
-    await page.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
-    await page.evaluate(() => scrollTo(0, 0));
-    await page.waitForFunction(() => !document.querySelector("[data-youtube]").hasAttribute("src"));
     await video.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
-    await video.locator('[data-experiment="previous"]').click();
-    console.log(`[check-visualization] ${width}px: lazy YouTube, 16:9 layout, carousel focus, player unload/reload and retained 3D scene passed (embed response stubbed)`);
+    assert.equal(await frame.getAttribute("src"), videoSource);
+    await page.frameLocator("[data-youtube]").getByText("YouTube test player").waitFor();
+    assert.equal(await card.isVisible(), true);
+    assert.equal(await video.isVisible(), true);
+    assert.equal(await video.locator("figcaption").textContent(), "genesis");
+    assert.equal(await frame.getAttribute("title"), "genesis — YouTube video");
+    assert.equal(await video.locator("[data-canvas], [data-view], [data-zoom], [data-legend]").count(), 0, "Videos must not show 3D controls");
+    assert.equal(await video.locator("a").getAttribute("href"), "https://www.youtube.com/watch?v=Z440GYvxCAs");
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.locator("#visualization").screenshot({ path: `artifacts/visualization/video-${width}.png` });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForFunction(() => !document.querySelector("[data-youtube]").hasAttribute("src"));
+    const previousRequests = youtubeRequests.length;
+    await video.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+    await page.frameLocator("[data-youtube]").getByText("YouTube test player").waitFor();
+    assert.equal(youtubeRequests.length, previousRequests + 1, "Returning to the video must reload its player");
+    await card.scrollIntoViewIfNeeded();
+    assert.equal(await card.getAttribute("data-state"), "ready", "Scrolling back must preserve the ready 3D scene");
+    assert.equal(packages.length, 1, "Scrolling back must not fetch the scene again");
     assert.deepEqual(failures, []);
-    console.log(`[check-visualization] ${width}px: Gallery ${geometry.sectionHeight.toFixed(0)}px / ${geometry.availableHeight}px, scene ${geometry.width.toFixed(0)}px vs Research ${geometry.researchWidth.toFixed(0)}px; controls, responsive legend/help, lazy loading, Top default/Home, Shift-pan, rotation and zoom passed`);
+    console.log(`[check-visualization] ${width}px: equal-height frames, responsive grid, in-image legend, controls, lazy YouTube unload/reload, retained scene, pan/rotation/zoom passed (embed stubbed)`);
     if (width === 1440) {
-      for (const size of [{ width: 1440, height: 720 }, { width: 1366, height: 768 }]) {
+      for (const size of [{ width: 1440, height: 720 }, { width: 1366, height: 768 }, { width: 1000, height: 768 }, { width: 999, height: 768 }, { width: 768, height: 844 }, { width: 600, height: 844 }]) {
         await page.setViewportSize(size);
         await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await home();
-        const fit = await page.evaluate(() => ({ section: document.querySelector("#visualization").getBoundingClientRect().height, available: innerHeight - document.querySelector(".navbar").getBoundingClientRect().height }));
-        assert.ok(fit.section <= fit.available, `Gallery should fit ${size.width}×${size.height}: ${JSON.stringify(fit)}`);
-        console.log(`[check-visualization] ${size.width}×${size.height}: complete gallery fits (${fit.section.toFixed(0)}px / ${fit.available}px)`);
+        const layout = await page.evaluate(() => {
+          const [scene, video] = [...document.querySelectorAll("[data-visualization-viewport]")].map((element) => element.getBoundingClientRect());
+          const [sceneCard, videoCard] = [...document.querySelectorAll("[data-visualization]")].map((element) => element.getBoundingClientRect());
+          const views = document.querySelector(".visualization-views").getBoundingClientRect();
+          const zoom = document.querySelector(".visualization-zoom").getBoundingClientRect();
+          return {
+            equal: Math.abs(scene.height - video.height) < 1,
+            arranged: innerWidth >= 1000 ? Math.abs(scene.top - video.top) < 1 && sceneCard.right < videoCard.left : Math.abs(scene.left - video.left) < 1 && sceneCard.bottom < videoCard.top,
+            overflow: document.documentElement.scrollWidth > innerWidth,
+            controls: views.right < zoom.left && views.top >= scene.bottom && zoom.top >= scene.bottom,
+          };
+        });
+        assert.ok(layout.equal && layout.arranged && layout.controls && !layout.overflow, `Responsive layout at ${size.width}px: ${JSON.stringify(layout)}`);
+        await page.locator("#visualization").screenshot({ path: `artifacts/visualization/layout-${size.width}.png` });
+        console.log(`[check-visualization] ${size.width}×${size.height}: equal-height ${size.width >= 1000 ? "columns" : "stack"}, no overflow or overlapping controls`);
       }
     }
     await context.close();
   }
+  // A short mobile viewport exposes the scene while the next media frame is offscreen.
+  // Observe each frame independently, rather than loading everything in the section.
+  const shortContext = await browser.newContext({ viewport: { width: 390, height: 400 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  let shortVideoRequests = 0;
+  await shortContext.route("https://www.youtube-nocookie.com/embed/**", (route) => {
+    shortVideoRequests++;
+    return route.fulfill({ contentType: "text/html", body: "YouTube test player" });
+  });
+  const shortPage = await shortContext.newPage();
+  await shortPage.goto(origin);
+  const showScene = () => shortPage.evaluate(() => {
+    const frame = document.querySelector('[data-kind="scene"] [data-visualization-viewport]');
+    scrollTo(0, scrollY + frame.getBoundingClientRect().top - 100);
+  });
+  await showScene();
+  await shortPage.waitForSelector('[data-kind="scene"][data-state="ready"]', { timeout: 60000 });
+  assert.equal(await shortPage.locator("[data-youtube]").getAttribute("src"), null, "Offscreen video must stay unloaded while the scene is visible");
+  assert.equal(shortVideoRequests, 0);
+  await shortPage.locator('[data-view="south"]').click();
+  await shortPage.locator('[data-kind="youtube"]').scrollIntoViewIfNeeded();
+  await shortPage.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+  await shortPage.frameLocator("[data-youtube]").getByText("YouTube test player").waitFor();
+  await showScene();
+  await shortPage.waitForFunction(() => !document.querySelector("[data-youtube]").hasAttribute("src"));
+  assert.equal(await shortPage.locator("[data-zoom-value]").textContent(), "1.2×", "Scrolling between media must preserve scene zoom");
+  assert.equal(await shortPage.locator('[data-view="south"]').getAttribute("aria-pressed"), "true");
+  await shortPage.locator('[data-kind="youtube"]').scrollIntoViewIfNeeded();
+  await shortPage.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+  await shortPage.evaluate(() => dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })));
+  assert.equal(await shortPage.locator("[data-youtube]").getAttribute("src"), null);
+  await shortPage.evaluate(() => dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+  await shortPage.waitForFunction(() => document.querySelector("[data-youtube]").hasAttribute("src"));
+  await shortContext.close();
+  console.log("[check-visualization] Short mobile viewport: independent loading/unloading, retained camera and cached-page lifecycle events passed");
+
   // A real insecure HTTP origin, without browser flags or mocking Web Crypto.
   // Proxy only this isolated test hostname to the local production preview.
   const upstream = new URL(origin);
@@ -284,6 +319,7 @@ try {
   httpURL.hostname = "gallery-http.test";
   httpURL.port = "";
   const httpContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  await httpContext.route("https://www.youtube-nocookie.com/embed/**", (route) => route.fulfill({ contentType: "text/html", body: "YouTube test player" }));
   await httpContext.route("http://gallery-http.test/**", async (route) => {
     const response = await route.fetch({ url: upstreamURL(route.request().url()) });
     await route.fulfill({ response });
@@ -327,6 +363,7 @@ try {
 
   // A failed package request must retain a usable preview and offer a retry.
   const page = await browser.newPage({ reducedMotion: "no-preference" });
+  await page.route("https://www.youtube-nocookie.com/embed/**", (route) => route.fulfill({ contentType: "text/html", body: "YouTube test player" }));
   let rendererURL;
   page.on("request", (request) => {
     if (/local-renderer\.[^/]+\.js/.test(request.url())) rendererURL = request.url();
