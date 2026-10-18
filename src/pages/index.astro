@@ -12,10 +12,10 @@ const projects = (await getCollection("projects"))
   .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
 
 const contactLinks = [
-  siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, external: false },
-  siteProfile.contacts.github && { label: "GitHub", href: siteProfile.contacts.github, external: true },
-  { label: "CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), external: false, download: true },
-].filter(Boolean) as Array<{ label: string; href: string; external: boolean; download?: boolean }>;
+  siteProfile.contacts.email && { label: "Email", href: `mailto:${siteProfile.contacts.email}`, newTab: false },
+  siteProfile.contacts.github && { label: "GitHub", href: siteProfile.contacts.github, newTab: true },
+  { label: "CV", href: withBase("/downloads/Shao-Yu-Tseng-CV.pdf"), newTab: true },
+].filter(Boolean) as Array<{ label: string; href: string; newTab: boolean }>;
 ---
 
 <BaseLayout title={siteProfile.name} description={siteProfile.description}>
@@ -36,9 +36,8 @@ const contactLinks = [
           {contactLinks.map((link) => (
             <a
               href={link.href}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noreferrer noopener" : undefined}
-              download={link.download ? "Shao-Yu-Tseng-CV.pdf" : undefined}
+              target={link.newTab ? "_blank" : undefined}
+              rel={link.newTab ? "noreferrer noopener" : undefined}
             >{link.label}</a>
           ))}
         </div>

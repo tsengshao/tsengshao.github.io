@@ -147,7 +147,7 @@ Create a Markdown file in `src/content/projects/`. Set:
 
 Featured research topics are presented directly on the home page. The primary navigation links to that section instead of a separate Research overview page.
 
-The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row contains Email, GitHub, and the Selected CV download; Google Scholar and ORCID are centered directly below the Publications heading.
+The centered homepage introduction and research-pathway illustration are implemented in `src/pages/index.astro` and `src/components/HeroSchematic.astro`. The illustration stays below the introduction and uses the wide `public/media/figures/research-pathway.svg`, with its process arrows, question marks, and stage labels preserved. When replacing it, update the intrinsic `width` and `height` in `HeroSchematic.astro` and run `npm run verify`. The homepage contact row contains Email, GitHub, and the Selected CV PDF link; Google Scholar and ORCID are centered directly below the Publications heading.
 
 ## Visualization
 
@@ -233,7 +233,7 @@ The command starts a temporary local Astro server and uses Playwright Chromium t
 - `artifacts/cv/Shao-Yu-Tseng-CV-full.pdf`
 - `public/downloads/Shao-Yu-Tseng-CV.pdf`, a generated copy of the Selected CV used by the website
 
-`artifacts/` and the generated file under `public/downloads/` are ignored by Git. The homepage links only to the Selected PDF. The Full PDF is never copied into `public/` or `dist/`, so it is not deployed by GitHub Pages. Run `npm run cv:pdf` once before expecting the homepage download to work under `npm run dev`; production builds generate it automatically.
+`artifacts/` and the generated file under `public/downloads/` are ignored by Git. The homepage opens the Selected PDF in a new tab without forcing a download; visitors' browser PDF settings can override inline viewing. The Full PDF is never copied into `public/` or `dist/`, so it is not deployed by GitHub Pages. Run `npm run cv:pdf` once before expecting the homepage PDF link to work under `npm run dev`; production builds generate it automatically.
 
 `npm run build` and `npm run verify` regenerate both PDFs. On a fresh machine, install the browser once with `npx playwright install chromium`. GitHub Actions uses `npx playwright install --with-deps chromium` before building.
 
