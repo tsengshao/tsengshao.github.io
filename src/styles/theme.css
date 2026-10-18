@@ -128,10 +128,21 @@ code{
   border-radius: 8px;
 }
 
-/* ===== Desktop: vertically center media block within research row ===== */
+/* ===== Desktop: center research figures independently of their controls ===== */
 @media (min-width: 901px){
-  .research-row .media-block{
-    align-self: center; /* center the whole media block vs the text column */
+  .research-row:not(.research-row--media-only) .media-block{
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+  }
+  .research-row:not(.research-row--media-only) .media-block::before{
+    content: ""; /* Balance the caption row below the figure. */
+  }
+}
+
+@media (min-width: 1200px){
+  .research-row:not(.research-row--media-only) .media-block{
+    width: calc(100% + 40px);
+    margin-left: -20px;
   }
 }
 
@@ -528,8 +539,10 @@ code{
   color: var(--muted);
   line-height: 1.7;
   font-size: var(--p);
-  hyphens: none;
-  text-align: left;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  text-align: justify;
+  text-align-last: left;
 }
 
 .research-more{

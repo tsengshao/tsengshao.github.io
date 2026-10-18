@@ -1,12 +1,15 @@
 ---
-title: Physical mechanisms of convective aggregation and convection–circulation coupling
-short: How does convective aggregation shape circulation and moist vortex development?
-summary: I use idealized cloud-resolving simulations with the Vector Vorticity equation cloud-resolving Model (VVM) to investigate the physical mechanisms linking convective organization, aggregation, and circulation development. My previous work demonstrated and quantified how the degree of convective aggregation and associated low-level inflow influence moist vortex intensification. Building on these findings, I am investigating how convection, moisture aggregation, and circulation feedbacks interact across spatial scales. The goal is to understand the mechanisms governing convective aggregation and its interactions with circulation, and how these processes contribute to moist vortex formation and intensification, providing insights into tropical cyclone seed genesis.
+title: Physical mechanisms of convection–circulation coupling
+
+short: How does convective aggregation influence vortex development?
+summary: Beyond model diagnostics, I also develop idealized numerical experiments to investigate convection–circulation coupling, with tropical cyclone seed genesis as one example. Using the Vector Vorticity Equation cloud-resolving model (VVM), my previous work demonstrated that aggregated convective clusters are associated with stronger low-level inflow and more rapid moist vortex intensification under identical background conditions. Building on these findings, I am investigating the physical mechanisms governing convective aggregation, particularly its characteristic spatial scales and interactions with background rotation. My broader goal is to understand how convection, moisture transport, and circulation feedbacks interact across spatial scales.
+
 
 order: 2
 featured: true
-tags: ["TC genesis", "convective organization", "VVM", "RRCE"]
-ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
+tags: ["TC genesis", "convective organization", "VVM"]
+#ratio: "16/9"    # 可選：有的用 "4/3" 或 "1/1"
+ratio: "4/3"    # 可選：有的用 "4/3" 或 "1/1"
 fit: "contain"   # 或 "cover", contain
 
 media:

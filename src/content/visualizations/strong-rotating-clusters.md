@@ -1,6 +1,6 @@
 ---
 kind: "youtube"
-title: "genesis"
+title: "Genesis"
 order: 2
 videoId: "Z440GYvxCAs"
 ---

@@ -37,7 +37,7 @@ const experiments = (await getCollection("visualizations"))
                 <button type="button" class="visualization-button visualization-icon" data-zoom="in" aria-label="Zoom in" disabled>+</button>
               </div>
             </div>
-            <p id={`scene-help-${id}`} class="visualization-help"><span class="visualization-desktop-help">Drag to rotate · Shift-drag to pan · Scroll or pinch to zoom<span class="visualization-keyboard-help"> · Arrow keys to rotate, +/− to zoom, Home to reset</span></span><span class="visualization-touch-help">Drag to rotate · Two-finger drag to pan · Pinch to zoom</span></p>
+            <p id={`scene-help-${id}`} class="visualization-help"><span class="visualization-desktop-help">Drag to rotate · Shift-drag to pan · Scroll to zoom<span class="visualization-keyboard-help"> · Arrow keys to rotate, +/− to zoom, Home to reset</span></span><span class="visualization-touch-help">Drag to rotate · Two-finger drag to pan · Pinch to zoom</span></p>
           </> : <>
             <figcaption class="visualization-simulation">{data.title}</figcaption>
             <div class="visualization-viewport visualization-viewport--video" data-visualization-viewport>
