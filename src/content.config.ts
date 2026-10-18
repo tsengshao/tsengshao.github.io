@@ -37,17 +37,26 @@ const projects = defineCollection({
 
 const visualizations = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/visualizations" }),
-  schema: z.object({
-    title: z.string(),
-    simulation: z.string(),
-    order: z.number().int().default(0),
-    preview: pathOrUrlOrEmpty,
-    previewAlt: z.string(),
-    scene: pathOrUrlOrEmpty,
-    time: z.string(),
-    zoom: z.number().positive().default(1),
-    defaultView: z.enum(["top", "north", "southwest", "south"]).default("top"),
-  }),
+  schema: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("scene").default("scene"),
+      title: z.string(),
+      simulation: z.string(),
+      order: z.number().int().default(0),
+      preview: pathOrUrlOrEmpty,
+      previewAlt: z.string(),
+      scene: pathOrUrlOrEmpty,
+      time: z.string(),
+      zoom: z.number().positive().default(1),
+      defaultView: z.enum(["top", "north", "southwest", "south"]).default("top"),
+    }),
+    z.object({
+      kind: z.literal("youtube"),
+      title: z.string(),
+      order: z.number().int().default(0),
+      videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/, "Expected an 11-character YouTube video ID"),
+    }),
+  ]),
 });
 
 const author = z.object({
