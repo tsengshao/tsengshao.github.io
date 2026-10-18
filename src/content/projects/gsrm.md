@@ -1,7 +1,8 @@
 ---
 title: Process-oriented diagnostics of convective processes in GSRMs
 short: Why do GSRMs differ in their representation of convective organization, precipitation intensity, and diurnal evolution?
-summary: My research focuses on developing quantitative, process-oriented diagnostics to understand convective processes and identify the physical origins of biases in global storm-resolving models (GSRMs). My previous work quantified precipitation enhancement associated with convective mergers and evaluated how this process is represented across observations and GSRMs. Building on these findings, I am extending these diagnostics to investigate the diurnal evolution of convection, particularly over tropical islands, through comparisons among GSRMs, large-eddy simulations (LES), and observations. The ultimate goal is to provide physically grounded guidance for improving the representation of convective processes in GSRMs.
+summary: Despite their more explicit representation of deep convection, kilometer-scale global storm-resolving models (GSRMs) still differ substantially in simulated convective processes and precipitation. My previous work used process-oriented diagnostics to quantify precipitation enhancement associated with convective mergers. The results showed that most models overestimate precipitation in non-merging systems, potentially associated with subgrid-scale parameterizations, while some exhibit excessive merger-induced enhancement, possibly linked to overly strong cold pools. Building on these findings, I am extending these diagnostics to investigate the diurnal evolution of convection, particularly over tropical islands, through comparisons among GSRMs, large-eddy simulations, and observations. My goal is to identify the physical origins of model biases and provide physically grounded guidance for improving the representation of convective processes in GSRMs.
+
 
 order: 1
 featured: true

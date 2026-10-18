@@ -4,7 +4,7 @@ export const siteProfile = {
   affiliation: "National Taiwan University",
   location: "Taipei, Taiwan",
   headline:
-    "Convection, circulation, and model diagnostics across scales.",
+    "Convection, circulation, and model diagnostics across scales",
   intro:
     "I study how tropical convection organizes and interacts with circulation across scales, from individual convective systems through convective aggregation to moist vortex formation. My research combines idealized cloud-resolving simulations with process-oriented diagnostics to understand the physical mechanisms of convection–circulation coupling and identify the physical origins of biases in global storm-resolving models (GSRMs).",
   description:
