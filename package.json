@@ -25,7 +25,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@kitware/vtk.js": "36.11.2",
+    "@kitware/vtk.js": "37.4.4",
     "@noble/hashes": "2.4.0",
     "astro": "^7.3.8",
     "fflate": "0.8.3",
